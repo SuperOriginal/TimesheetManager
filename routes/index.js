@@ -28,11 +28,11 @@ router.get('/url', function(req, res, next) {
 });
 
 router.get('/oauthcallback', function(req, res, next) {
-
+  res.render('oauthcallback', {title: "Timesheet"});
 });
 
 /* GET access token using auth key. */
-router.get('/token', function(req, res, next) {
+router.get('/tokens', function(req, res, next) {
   var code = req.query.code;
 
   oauth2Client.getToken(code, function(err, tokens) {

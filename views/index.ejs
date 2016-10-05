@@ -3,7 +3,7 @@
 
   <% include partials/head.ejs %>
 
-  <body>
+  <body ng-app="app" ng-controller="ctrl">
     <div class="container-fluid">
       <div class="jumbotron">
         <h1><%=title %></h1>
@@ -11,14 +11,39 @@
         <p>A Web-based time-sheet manager linked to Google Sheets.</p>
       </div>
 
-      <img src="images/sign-in-with-google.png">
+      <img src="images/sign-in-with-google.png" ng-click="login();">
 
     </div>
 
     <% include partials/scripts.ejs %>
 
     <script>
-      
+      var app = angular.module("app", []);
+
+      app.controller("ctrl", function($scope, $http, $window) {
+
+      var url;
+      var windowThatWasOpened;
+
+      $http.get("url").then(function(response) {
+        url = response.data;
+      });
+      $scope.login = function() {
+        windowThatWasOpened = $window.open(url, "Please sign in with Google", "width=500px,height:700px");
+
+      };
+      window.onmessage = function(e) {
+        windowThatWasOpened.close();
+        var urlWithCode = e.data;
+        var idx = urlWithCode.lastIndexOf("code=");
+        var code = urlWithCode.substring(idx + 5).replace("#","");
+        console.log(code);
+        $http.get("tokens?code=" + code).then(function(response) {
+          console.log(response.data);
+        });
+      };
+    });
+
     </script>
   </body>
 </html>
