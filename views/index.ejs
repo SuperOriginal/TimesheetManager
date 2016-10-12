@@ -11,11 +11,28 @@
         <p>A Web-based time-sheet manager linked to Google Sheets.</p>
       </div>
 
-      <img src="images/sign-in-with-google.png" ng-click="login();">
+        <div id="authAlert" class="alert alert-danger">
+          <a class="close">×</a>
+          <p class="text-center"><strong>Warning!</strong> You must allow Google to access your spreadsheets.</p>
+        </div>
+
+        <img src="images/sign-in-with-google.png" ng-click="login();">
 
     </div>
 
     <% include partials/scripts.ejs %>
+
+    <script>
+      $(document).ready(function() {
+        $("#authAlert").hide();
+        $(".alert").find(".close").on("click", function (e) {
+        // Find all elements with the "alert" class, get all descendant elements with the class "close", and bind a "click" event handler
+        e.stopPropagation();    // Don't allow the click to bubble up the DOM
+        e.preventDefault();    // Don't let any default functionality occur (in case it's a link)
+        $(this).closest(".alert").slideUp(400);    // Hide this specific Alert
+    });
+      });
+    </script>
 
     <script>
       var app = angular.module("app", []);
@@ -37,12 +54,23 @@
         var urlWithCode = e.data;
         var idx = urlWithCode.lastIndexOf("code=");
         var code = urlWithCode.substring(idx + 5).replace("#","");
-        console.log(code);
         $http.get("tokens?code=" + code).then(function(response) {
-          console.log(response.data);
+          if(response.data){
+            accessGranted();
+          }else{
+            accessDenied();
+          }
         });
       };
     });
+
+    function accessDenied(){
+      $("#authAlert").slideDown(400);
+    }
+
+    function accessGranted(){
+      $("#authAlert").slideUp(400);
+    }
 
     </script>
   </body>

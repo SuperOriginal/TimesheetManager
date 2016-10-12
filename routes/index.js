@@ -37,8 +37,7 @@ router.get('/tokens', function(req, res, next) {
 
   oauth2Client.getToken(code, function(err, tokens) {
     if (err) {
-      console.log(err);
-      res.send(err);
+      res.send(null);
       return;
     }
 
