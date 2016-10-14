@@ -2,14 +2,12 @@ var express = require('express');
 var router = express.Router();
 var google = require('googleapis');
 var fs = require('fs');
+var creds = require('../credentials.json');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Timesheet' });
 });
-
-var credentialFile = fs.readFileSync('credentials.json');
-var creds = JSON.parse(credentialFile);
 
 var OAuth2 = google.auth.OAuth2;
 
@@ -34,17 +32,20 @@ router.get('/oauthcallback', function(req, res, next) {
 /* GET access token using auth key. */
 router.get('/tokens', function(req, res, next) {
   var code = req.query.code;
-
   oauth2Client.getToken(code, function(err, tokens) {
     if (err) {
       res.send(null);
       return;
     }
-
+    console.log("success");
     oauth2Client.setCredentials(tokens);
-
-    res.send(tokens);
+    res.status(300).send({redirect:'/manager'});
   });
+});
+
+router.post('/findSheet', function(req,res,next){
+  console.log("client to server got " + req.body.url);
+  //handle url parsing here
 });
 
 module.exports = router;
