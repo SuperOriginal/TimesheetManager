@@ -35,7 +35,7 @@
     <script>
       var app = angular.module("app", []);
 
-      app.controller("ctrl", function($scope, $http, $window) {
+      app.controller("ctrl", function($scope, $http, $window, $location) {
 
       var url;
       var windowThatWasOpened;
@@ -53,24 +53,28 @@
         var idx = urlWithCode.lastIndexOf("code=");
         var code = urlWithCode.substring(idx + 5).replace("#","");
         $http.get("tokens?code=" + code).then(function(response) {
+          console.log(response.data);
           if(response.data){
-            accessGranted();
+            $scope.accessGranted(response.data);
           }else{
-            accessDenied();
+            $scope.accessDenied();
           }
         });
       };
+
+      $scope.accessGranted = function accessGranted(data){
+        $window.location.href = "/manager";
+        $scope.$apply();
+        $("#authAlert").slideUp(400);
+      }
+
+      $scope.accessDenied = function accessDenied(){
+        $("#authAlert").slideDown(400);
+      }
+
     });
 
-    function accessDenied(){
-      $("#authAlert").slideDown(400);
-    }
 
-    function accessGranted(){
-      $("#authAlert").slideUp(400);
-      console.log('redirect');
-      //$window.location.href = response.redirect;
-    }
 
     </script>
   </body>

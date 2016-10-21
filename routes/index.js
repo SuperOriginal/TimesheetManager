@@ -37,10 +37,14 @@ router.get('/tokens', function(req, res, next) {
       res.send(null);
       return;
     }
-    console.log("success");
     oauth2Client.setCredentials(tokens);
-    res.status(300).send({redirect:'/manager'});
+    res.send(tokens);
   });
+});
+
+router.get('/manager', function(req,res,next){
+  res.render('manager', {title: "Timesheet"});
+  //handle url parsing here
 });
 
 router.post('/findSheet', function(req,res,next){
