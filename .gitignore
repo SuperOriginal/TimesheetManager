@@ -38,3 +38,6 @@ jspm_packages
 
 #shhhh don't tell anyone
 credentials.json
+
+#ESLint config
+.eslintrc.js

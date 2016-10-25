@@ -1,81 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html ng-app='timesheetApp'>
 
-  <% include partials/head.ejs %>
+  <head>
+      <title><%= title %></title>
+      <link rel='stylesheet' href='/stylesheets/style.css' />
+      <!-- Latest compiled and minified CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  </head>
 
-  <body ng-app="app" ng-controller="ctrl">
-    <div class="container-fluid">
-      <div class="jumbotron">
-        <h1><%=title %></h1>
+  <body>
+    <ui-view></ui-view>
 
-        <p>A Web-based time-sheet manager linked to Google Sheets.</p>
-      </div>
-
-        <div id="authAlert" class="alert alert-danger" style="display:none">
-          <a class="close">×</a>
-          <p class="text-center"><strong>Warning!</strong> You must allow Google to access your spreadsheets.</p>
-        </div>
-
-        <img src="images/sign-in-with-google.png" ng-click="login();">
-
-    </div>
-
-    <% include partials/scripts.ejs %>
-
-    <script>
-      $(document).ready(function() {
-        $(".alert").find(".close").on("click", function (e) {
-          e.stopPropagation();
-          e.preventDefault();
-          $(this).closest(".alert").slideUp(400);
-        });
-      });
-    </script>
-
-    <script>
-      var app = angular.module("app", []);
-
-      app.controller("ctrl", function($scope, $http, $window, $location) {
-
-      var url;
-      var windowThatWasOpened;
-
-      $http.get("url").then(function(response) {
-        url = response.data;
-      });
-      $scope.login = function() {
-        windowThatWasOpened = $window.open(url, "Please sign in with Google", "width=500px,height:700px");
-
-      };
-      window.onmessage = function(e) {
-        windowThatWasOpened.close();
-        var urlWithCode = e.data;
-        var idx = urlWithCode.lastIndexOf("code=");
-        var code = urlWithCode.substring(idx + 5).replace("#","");
-        $http.get("tokens?code=" + code).then(function(response) {
-          console.log(response.data);
-          if(response.data){
-            $scope.accessGranted(response.data);
-          }else{
-            $scope.accessDenied();
-          }
-        });
-      };
-
-      $scope.accessGranted = function accessGranted(data){
-        $window.location.href = "/manager";
-        $scope.$apply();
-        $("#authAlert").slideUp(400);
-      }
-
-      $scope.accessDenied = function accessDenied(){
-        $("#authAlert").slideDown(400);
-      }
-
-    });
-
-
-
-    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.3.1/angular-ui-router.min.js"></script>
+    <script src="javascripts/timesheetApp.js"</script>
   </body>
 </html>
