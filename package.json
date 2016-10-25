@@ -12,6 +12,10 @@
     "express": "~4.13.4",
     "hbs": "~4.0.0",
     "morgan": "~1.7.0",
+    "passport-google-oauth": "^1.0.0",
     "serve-favicon": "~2.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^3.8.1"
   }
 }
