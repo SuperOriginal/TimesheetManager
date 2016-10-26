@@ -1,31 +1,43 @@
-var app = angular.module('timesheetApp').run(function($rootScope){
-  $rootScope.authenticated = false;
-  $rootScope.currentUser = '';
+var app = angular.module('timesheetApp')
 
-  $rootScope.signout = function(){
-    	$http.get('auth/signout');
-    	$rootScope.authenticated = false;
-    	$rootScope.current_user = '';
-	};
-});
+.config(function($stateProvider, $locationProvider) {
 
-app.config(function($stateProvider) {
+  //$locationProvider.html5Mode(true);
+
   var loginState = {
     name: 'login',
     url: '/login',
-    template: 'signin.html'
+    templateUrl: 'signin.html'
+    controller: 'authController as authCtrl'
   }
 
   var mainState = {
     name: 'main',
     url: '/',
-    template: 'index.html'
+    templateUrl: 'main.html'
   }
 
-  $stateProvider.state(helloState);
-  $stateProvider.state(aboutState);
+  $stateProvider.state(loginState);
+  $stateProvider.state(mainState);
+  console.log('set states');
 });
 
-app.controller('authController', function($scope){
+.controller('authController', function($scope, $http){
+  console.log('set controller');
+  $scope.login = function(){
+    $http.post('/auth/login')
+  }
+})
 
+
+.run(function($rootScope){
+  console.log('ran');
+  $rootScope.authenticated = false;
+  $rootScope.currentUser = '';
+
+  $rootScope.signout = function(){
+    	$http.get('/auth/signout');
+    	$rootScope.authenticated = false;
+    	$rootScope.current_user = '';
+	};
 });
