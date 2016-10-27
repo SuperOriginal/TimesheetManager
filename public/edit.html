@@ -1,10 +1,19 @@
 <div class="container-fluid">
   <div class="jumbotron">
-    <h1>Welcome to Timesheet</h1>
+    <h1>Timesheet</h1>
 
     <p>A Web-based time-sheet manager linked to Google Sheets.</p>
   </div>
 
-  <h1>Let's get started.</h1>
+  <!-- <h1>Let's get started.</h1> -->
 
+  <h5>Access Token: {{editCtrl.accessToken}}</h5>
+
+  <br>
+  <h3>Enter your sheet url:</h3>
+
+  <form ng-submit='submitUrl()'>
+    <input ng-model='spreadsheet.id' type="text" name="url"><br>
+    <input type="submit" value="Submit">
+  </form>
 </div>
