@@ -1,43 +1,35 @@
-var app = angular.module('timesheetApp')
+var timesheetApp = angular.module('timesheetApp', ['ui.router']);
 
-.config(function($stateProvider, $locationProvider) {
+timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvider) {
 
-  //$locationProvider.html5Mode(true);
+  $urlRouterProvider.otherwise('/');
 
-  var loginState = {
-    name: 'login',
-    url: '/login',
-    templateUrl: 'signin.html'
-    controller: 'authController as authCtrl'
-  }
+  $locationProvider.html5Mode(true);
 
-  var mainState = {
-    name: 'main',
+  $stateProvider.state('login', {
     url: '/',
-    templateUrl: 'main.html'
-  }
+    templateUrl: 'signin.html',
+    controller: 'authController as authCtrl'
+  });
+  $stateProvider.state('edit',{
+    url: '/edit',
+    templateUrl: 'edit.html'
+  });
+})
 
-  $stateProvider.state(loginState);
-  $stateProvider.state(mainState);
-  console.log('set states');
-});
-
-.controller('authController', function($scope, $http){
-  console.log('set controller');
+.controller('authController', function($scope, $window){
   $scope.login = function(){
-    $http.post('/auth/login')
+    $window.location.href = '/auth/google';
   }
 })
 
-
-.run(function($rootScope){
-  console.log('ran');
+.run(function($rootScope, $http){
   $rootScope.authenticated = false;
   $rootScope.currentUser = '';
 
   $rootScope.signout = function(){
-    	$http.get('/auth/signout');
-    	$rootScope.authenticated = false;
-    	$rootScope.current_user = '';
-	};
+    $http.get('/auth/signout');
+    $rootScope.authenticated = false;
+    $rootScope.current_user = '';
+  };
 });
