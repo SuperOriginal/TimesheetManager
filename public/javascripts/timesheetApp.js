@@ -24,11 +24,16 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 })
 
-.controller('editController', function($scope, $location){
-  this.accessToken = $location.search()['token'];
+.controller('editController', function($scope, $location, $http){
+  $scope.accessToken = $location.search()['token'];
 
   $scope.submitUrl = function(){
-    var spreadsheetId = $scope.spreadsheet.id;
+    $http.get('/api/test', {params: {
+      access_token: $scope.accessToken,
+      sheet_id: $scope.spreadsheet.id
+    }}).then(function(response){
+      $scope.sheet_data = response;
+    });
   }
 })
 
@@ -36,8 +41,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $rootScope.authenticated = false;
   $rootScope.currentUser = '';
 
-  $rootScope.signout = function(){
-    $http.get('/auth/signout');
+  $rootScope.logout = function(){
+    $http.get('/auth/logout');
     $rootScope.authenticated = false;
     $rootScope.current_user = '';
   };

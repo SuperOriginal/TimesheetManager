@@ -16,7 +16,7 @@ module.exports = function(passport){
 
   //log in
   router.get('/google', passport.authenticate('google', {
-    scope: ['profile','email']
+    scope: ['profile','email','https://www.googleapis.com/auth/spreadsheets']
   }));
 
   router.get('/google/callback', callback);
@@ -36,7 +36,7 @@ module.exports = function(passport){
       res.end();
     })(req,res,next);
   }
-  
+
   //log out
   router.get('/logout', function(req, res) {
     req.logout();

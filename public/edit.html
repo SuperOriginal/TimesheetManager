@@ -7,7 +7,7 @@
 
   <!-- <h1>Let's get started.</h1> -->
 
-  <h5>Access Token: {{editCtrl.accessToken}}</h5>
+  <h5>Access Token: {{accessToken}}</h5>
 
   <br>
   <h3>Enter your sheet url:</h3>
@@ -16,4 +16,8 @@
     <input ng-model='spreadsheet.id' type="text" name="url"><br>
     <input type="submit" value="Submit">
   </form>
+
+  <pre ng-show='sheet_data'>
+    {{sheet_data | json}}
+  </pre>
 </div>
