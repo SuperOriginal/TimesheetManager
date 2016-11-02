@@ -33,9 +33,12 @@ router.post('/spreadsheet', function(req, res){
 
 //read cells in the sheet to update index variables for reference
 function updateIndices(data){
-  data.forEach(function(row){
-
-  });
+  var colIndex = 0, rowIndex = 0;
+  if(data.length > 0){
+    data.forEach(function(row){
+      if()
+    });
+  }
 }
 
 //use api to retrieve sheet data from cells A1 to J500 - arbitrary numbers, hopefully it'll work
