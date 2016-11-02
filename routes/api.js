@@ -10,7 +10,6 @@ router.get('/spreadsheet', function(req, res){
 
   var sheetId = params['sheet_id'];
   var accessToken = params['access_token'];
-  var r = this;
   testSheet(accessToken, sheetId, function(err, resp){
     if(err){
       res.redirect('/#error');
@@ -42,7 +41,6 @@ function updateIndices(data){
 //use api to retrieve sheet data from cells A1 to J500 - arbitrary numbers, hopefully it'll work
 function getSheet(auth, id, callback) {
   var sheets = google.sheets('v4');
-  var data;
   sheets.spreadsheets.values.get({
     access_token: auth,
     spreadsheetId: id,
