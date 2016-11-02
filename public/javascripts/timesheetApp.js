@@ -28,7 +28,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $scope.accessToken = $location.search()['token'];
 
   $scope.submitUrl = function(){
-    $http.get('/api/test', {params: {
+    $http.get('/api/spreadsheet', {params: {
       access_token: $scope.accessToken,
       sheet_id: $scope.spreadsheet.id
     }}).then(function(response){
