@@ -25,6 +25,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 })
 
 .controller('editController', function($scope, $location, $http){
+
   $scope.accessToken = $location.search()['token'];
 
   $scope.submitUrl = function(){
@@ -33,8 +34,16 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       sheet_id: $scope.spreadsheet.id
     }}).then(function(response){
       $scope.sheet_data = response;
+      updateIndices(response.data.values, $scope);
+
+      console.log('date starts at ' + dateCell + ' & last is at ' + lastEntryCell);
     });
   }
+
+  $scope.addEntry = function(){
+    //TODO call api to set data
+  }
+
 })
 
 .run(function($rootScope, $http){
@@ -47,3 +56,32 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     $rootScope.current_user = '';
   };
 });
+
+//read cells in the sheet to update index variables for reference
+function updateIndices(data, scope){
+  var colIndex = 0, rowIndex = 0;
+  if(data.length > 0){
+    data.forEach(function(row){
+      colIndex = 0;
+        row.forEach(function(col){
+            if(col === 'Date'){
+              //cell will be in A1 format
+              scope.firstEntryCell = idOf(colIndex) + rowIndex;
+            }
+
+            if(col === 'TOTAL THIS PERIOD'){
+              console.log('found total');
+              //cell will be in A1 format
+              scope.lastEntryCell = idOf(colIndex - 1) + (rowIndex - 2);
+            }
+            colIndex++;
+        });
+        rowIndex++;
+    });
+  }
+}
+
+function idOf(i) {
+    return (i >= 26 ? idOf((i / 26 >> 0) - 1) : '') +
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i % 26 >> 0];
+}

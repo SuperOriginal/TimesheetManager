@@ -2,15 +2,13 @@ var express = require('express');
 var google = require('googleapis');
 var router = express.Router();
 
-var dateIndex,lastEntry;
-
 //get all cells in spreadsheet
 router.get('/spreadsheet', function(req, res){
   var params = req.query;
 
   var sheetId = params['sheet_id'];
   var accessToken = params['access_token'];
-  testSheet(accessToken, sheetId, function(err, resp){
+  getSheet(accessToken, sheetId, function(err, resp){
     if(err){
       res.redirect('/#error');
     }else{
@@ -23,6 +21,8 @@ router.get('/spreadsheet', function(req, res){
 router.post('/spreadsheet', function(req, res){
   var params = req.query;
 
+  var firstIndex = params['first-index'];
+  var lastIndex = params['last-index'];
   var desc = params['desc'];
   var hours = params['hours'];
   var date = new Date().toLocaleDateString();
@@ -31,17 +31,7 @@ router.post('/spreadsheet', function(req, res){
 
 });
 
-//read cells in the sheet to update index variables for reference
-function updateIndices(data){
-  var colIndex = 0, rowIndex = 0;
-  if(data.length > 0){
-    data.forEach(function(row){
-      if()
-    });
-  }
-}
-
-//use api to retrieve sheet data from cells A1 to J500 - arbitrary numbers, hopefully it'll work
+//use api to retrieve sheet data from cells A1 to J500 - arbitrary numbers, should be good enough
 function getSheet(auth, id, callback) {
   var sheets = google.sheets('v4');
   sheets.spreadsheets.values.get({
