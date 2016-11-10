@@ -36,12 +36,14 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       $scope.sheet_data = response;
       updateIndices(response.data.values, $scope);
 
-      console.log('date starts at ' + dateCell + ' & last is at ' + lastEntryCell);
     });
   }
 
   $scope.addEntry = function(){
-    //TODO call api to set data
+    $http.post('/api/spreadsheet', {params: {
+      access_token: $scope.accessToken,
+      sheet_id: $scope.spreadsheet.id
+    }});
   }
 
 })
@@ -59,7 +61,11 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
 //read cells in the sheet to update index variables for reference
 function updateIndices(data, scope){
-  var colIndex = 0, rowIndex = 0;
+  //return if empty
+  if(!data) return;
+
+  //col starts at 0(A) & rowIndex starts at 1 so 1 = first row
+  var colIndex = 0, rowIndex = 1;
   if(data.length > 0){
     data.forEach(function(row){
       colIndex = 0;
