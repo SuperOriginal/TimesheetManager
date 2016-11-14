@@ -35,7 +35,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     }}).then(function(response){
       $scope.sheet_data = response;
       updateIndices(response.data.values, $scope);
-
     });
   }
 
@@ -61,29 +60,36 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
 //read cells in the sheet to update index variables for reference
 function updateIndices(data, scope){
+  scope.firstEntryCell = null;
+  scope.lastEntryCell = null;
   //return if empty
   if(!data) return;
 
   //col starts at 0(A) & rowIndex starts at 1 so 1 = first row
-  var colIndex = 0, rowIndex = 1;
+  var dateCol;
   if(data.length > 0){
-    data.forEach(function(row){
-      colIndex = 0;
-        row.forEach(function(col){
-            if(col === 'Date'){
-              //cell will be in A1 format
-              scope.firstEntryCell = idOf(colIndex) + rowIndex;
-            }
+    for(rowIndex = 0; rowIndex < data.length; rowIndex++){
+      var row = data[rowIndex];
+        for(colIndex = 0; colIndex <= row.length; colIndex++){
+          var col = row[colIndex];
+          if(col === 'Date'){
+            //cell will be in A1 format
+            scope.firstEntryCell = idOf(colIndex) + (rowIndex + 1);
+            dateCol = colIndex;
+          }
 
-            if(col === 'TOTAL THIS PERIOD'){
-              console.log('found total');
-              //cell will be in A1 format
-              scope.lastEntryCell = idOf(colIndex - 1) + (rowIndex - 2);
+          if(scope.firstEntryCell){
+            if(scope.lastEntryCell){
+              return;
             }
-            colIndex++;
-        });
-        rowIndex++;
-    });
+            //if we are in the entry section and we find an empty row, it is the last entry
+            console.log(row);
+            if(!row || row.length === 0){
+              scope.lastEntryCell = idOf(dateCol) + (rowIndex);
+            }
+          }
+        };
+    };
   }
 }
 
