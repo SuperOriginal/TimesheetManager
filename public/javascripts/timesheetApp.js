@@ -41,8 +41,10 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $scope.addEntry = function(){
     $http.post('/api/spreadsheet', {params: {
       access_token: $scope.accessToken,
-      sheet_id: $scope.spreadsheet.id
+      sheet_id: $scope.spreadsheet.id,
+      indices: $scope.indices
     }});
+    $scope.indices.lastEntryCell.row++;
   }
 
 })
@@ -60,8 +62,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
 //read cells in the sheet to update index variables for reference
 function updateIndices(data, scope){
-  scope.firstEntryCell = null;
-  scope.lastEntryCell = null;
+  scope.indices = {};
   //return if empty
   if(!data) return;
 
@@ -73,19 +74,18 @@ function updateIndices(data, scope){
         for(colIndex = 0; colIndex <= row.length; colIndex++){
           var col = row[colIndex];
           if(col === 'Date'){
-            //cell will be in A1 format
-            scope.firstEntryCell = idOf(colIndex) + (rowIndex + 1);
+            scope.indices.firstEntryCell = {row: rowIndex, col: colIndex};
             dateCol = colIndex;
           }
 
-          if(scope.firstEntryCell){
-            if(scope.lastEntryCell){
+          if(scope.indices.firstEntryCell){
+            if(scope.indices.lastEntryCell){
               return;
             }
             //if we are in the entry section and we find an empty row, it is the last entry
             console.log(row);
             if(!row || row.length === 0){
-              scope.lastEntryCell = idOf(dateCol) + (rowIndex);
+              scope.indices.lastEntryCell = {row: rowIndex, col: dateCol};
             }
           }
         };

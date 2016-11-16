@@ -40,6 +40,13 @@ app.use('/', index);
 app.use('/auth', auth);
 app.use('/api', api);
 
+//catch-all function to reroute user to index
+//this fixes refresh 404 errors
+app.use(function(req, res) {
+  //pass the requested path to the client so angular can handle it instead of the server
+  res.redirect('/#' + req.url);
+});
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

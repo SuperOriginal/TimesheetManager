@@ -22,6 +22,7 @@ router.get('/spreadsheet', function(req, res){
 router.post('/spreadsheet', function(req, res){
   var sheetId = req.body.params.sheet_id;
   var accessToken = req.body.params.access_token;
+  var indices = req.body.params.indices;
 
   //TODO get required variables
   // var firstIndex = params['first-index'];
@@ -31,7 +32,7 @@ router.post('/spreadsheet', function(req, res){
   var date = new Date().toLocaleDateString();
 
   //TODO Write entry to GoogleSheets and shift footer down
-  writeSheet(accessToken, sheetId, 'A1', ['Test'], function(err, res){
+  writeSheet(accessToken, sheetId, indices, {date: date, desc: 'test', hours: 0}, function(err, res){
     if(err){
       console.log('error: ' + err);
     }else{
@@ -41,23 +42,63 @@ router.post('/spreadsheet', function(req, res){
 
 });
 
-function writeSheet(auth, id, range, values, callback){
+function writeSheet(auth, id, indices, data, callback){
+  var requests = [];
+  var row = indices.lastEntryCell.row-1, col = indices.lastEntryCell.col;
+
+  //move all footing down by one
+  requests.push({
+    cutPaste: {
+      source: {
+        sheetId: 0,
+        startRowIndex: (row+1),
+        //TODO possibly make this dynamic
+        endRowIndex: 500,
+        startColumnIndex: 0,
+        endColumnIndex:10
+      },
+      destination: {
+        sheetId: 0,
+        rowIndex: (row+2),
+        columnIndex: 0
+      },
+      pasteType: 'PASTE_FORMAT'
+    }
+  });
+
+  //write entry
+  requests.push({
+    updateCells: {
+      start: {
+        sheetId: 0,
+        rowIndex: row,
+        columnIndex: col
+      },
+      rows: [{
+        values: [{
+          userEnteredValue: {stringValue: data.date},
+          userEnteredFormat: {horizontalAlignment: 'RIGHT'}
+        },
+        {
+          userEnteredValue: {stringValue: data.desc}
+        },
+        {
+          userEnteredValue: {numberValue: data.hours}
+        }]
+      }],
+      fields: 'userEnteredValue,userEnteredFormat(horizontalAlignment)'
+    }
+  });
+
+  var batchUpdateRequest = {requests: requests}
+
   var options = {
     access_token: auth,
     spreadsheetId: id,
-    resource: {
-      valueInputOption: 'RAW',
-      data: [
-        {
-          range: range,
-          majorDimension: 'ROWS',
-          values: [values]
-        }
-      ]
-    }
+    resource: batchUpdateRequest
   }
 
-  sheets.spreadsheets.values.batchUpdate(options, function(err, res){
+  sheets.spreadsheets.batchUpdate(options, function(err, res){
     callback(err, res);
   })
 }
