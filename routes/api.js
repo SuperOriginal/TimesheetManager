@@ -53,7 +53,7 @@ function writeSheet(auth, id, indices, data, callback){
         sheetId: 0,
         startRowIndex: (row+1),
         //TODO possibly make this dynamic
-        endRowIndex: 500,
+        endRowIndex: 100,
         startColumnIndex: 0,
         endColumnIndex:10
       },
@@ -62,7 +62,7 @@ function writeSheet(auth, id, indices, data, callback){
         rowIndex: (row+2),
         columnIndex: 0
       },
-      pasteType: 'PASTE_FORMAT'
+      pasteType: 'PASTE_NORMAL'
     }
   });
 

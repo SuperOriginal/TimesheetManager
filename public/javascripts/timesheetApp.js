@@ -78,6 +78,10 @@ function updateIndices(data, scope){
             dateCol = colIndex;
           }
 
+          if(col === 'Hours'){
+            scope.indices.hoursCol = colIndex;
+          }
+
           if(scope.indices.firstEntryCell){
             if(scope.indices.lastEntryCell){
               return;
