@@ -27,6 +27,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 .controller('editController', function($scope, $location, $http){
 
   $scope.accessToken = $location.search()['token'];
+  $scope.indices = {};
+  $scope.entries = [];
 
   $scope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
@@ -62,12 +64,11 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
 //read cells in the sheet to update index variables for reference
 function updateIndices(data, scope){
-  scope.indices = {};
   //return if empty
   if(!data) return;
 
   //col starts at 0(A) & rowIndex starts at 1 so 1 = first row
-  var dateCol;
+  var dateCol, updated;
   if(data.length > 0){
     for(rowIndex = 0; rowIndex < data.length; rowIndex++){
       var row = data[rowIndex];
@@ -82,19 +83,38 @@ function updateIndices(data, scope){
             scope.indices.hoursCol = colIndex;
           }
 
-          if(scope.indices.firstEntryCell){
-            if(scope.indices.lastEntryCell){
-              return;
-            }
-            //if we are in the entry section and we find an empty row, it is the last entry
-            console.log(row);
-            if(!row || row.length === 0){
-              scope.indices.lastEntryCell = {row: rowIndex, col: dateCol};
-            }
+          if(col === 'Description'){
+            scope.indices.descCol = colIndex;
           }
         };
+
+        if(scope.indices.firstEntryCell && rowIndex > scope.indices.firstEntryCell.row){
+          //if we are in the entry section and we find an empty row, it is the last entry
+          if((!row || row.length === 0) && !updated){
+
+            //If the old last index is longer than the current one (user deleted some entries), then
+            //we want to remove the extra elements.
+            if(scope.indices.lastEntryCell && scope.indices.lastEntryCell.row > rowIndex){
+              scope.entries.slice(0,rowIndex);
+            }
+            //now we'll update to the new index
+            scope.indices.lastEntryCell = {row: rowIndex , col: dateCol};
+            updated = true;
+          }
+          if(!updated){
+            var obj = {
+              date: data[rowIndex][dateCol],
+              desc: data[rowIndex][scope.indices.descCol],
+              hours: data[rowIndex][scope.indices.hoursCol]
+            };
+
+            scope.entries[rowIndex - scope.indices.firstEntryCell.row - 1] = obj;
+            console.log('added obj at ' + rowIndex + ' date is ' + obj.date);
+          }
+      }
     };
   }
+  console.log('updated');
 }
 
 function idOf(i) {

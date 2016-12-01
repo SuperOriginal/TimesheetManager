@@ -22,7 +22,20 @@
 
   <button type="button" name="button" ng-click='addEntry()'>Test</button>
 
-  <pre ng-show='sheet_data'>
-    {{sheet_data.data | json}}
-  </pre>
+  <table ng-show='entries' class="table table-striped">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Hours</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="entry in entries track by $index">
+        <td>{{ entry.date }}</td>
+        <td>{{ entry.desc }}</td>
+        <td>{{ entry.hours }}</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
