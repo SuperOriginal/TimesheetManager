@@ -21,6 +21,7 @@
   </form>
 
   <button type="button" name="button" ng-click='addEntry()'>Test</button>
+  <button type="button" name="button" ng-click='popup()'>Popup</button>
 
   <table ng-show='entries' class="table table-striped">
     <thead>
@@ -31,7 +32,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="entry in entries track by $index">
+      <tr data-ng-repeat="entry in entries track by $index">
         <td>{{ entry.date }}</td>
         <td>{{ entry.desc }}</td>
         <td>{{ entry.hours }}</td>

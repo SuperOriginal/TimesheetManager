@@ -25,7 +25,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 })
 
 .controller('editController', function($scope, $location, $http){
-
+  window.sco = $scope;
   $scope.accessToken = $location.search()['token'];
   $scope.indices = {};
   $scope.entries = [];
@@ -38,6 +38,22 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       $scope.sheet_data = response;
       updateIndices(response.data.values, $scope);
     });
+  }
+
+  $scope.popup = function(){
+    swal({
+      title: '<i>HTML</i> <u>example</u>',
+      type: 'info',
+      html: $('<div>').attr('id', 'popup'),
+      showCloseButton: true,
+      showCancelButton: true,
+      confirmButtonText:
+        'Great!',
+      cancelButtonText:
+        'Cancel'
+      });
+
+      $('#popup').load('/popup.html');
   }
 
   $scope.addEntry = function(){
@@ -64,11 +80,12 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
 //read cells in the sheet to update index variables for reference
 function updateIndices(data, scope){
+  console.log('original ' + scope.entries.length);
   //return if empty
   if(!data) return;
 
   //col starts at 0(A) & rowIndex starts at 1 so 1 = first row
-  var dateCol, updated;
+  var dateCol, updated = false;
   if(data.length > 0){
     for(var rowIndex = 0; rowIndex < data.length; rowIndex++){
       var row = data[rowIndex];
@@ -95,7 +112,7 @@ function updateIndices(data, scope){
             //If the old last index is longer than the current one (user deleted some entries), then
             //we want to remove the extra elements.
           if(scope.indices.lastEntryCell && scope.indices.lastEntryCell.row > rowIndex){
-            scope.entries.slice(0,rowIndex);
+            scope.entries.splice(rowIndex - scope.indices.firstEntryCell.row - 1);
           }
           //now we'll update to the new index
           scope.indices.lastEntryCell = {row: rowIndex , col: dateCol};
@@ -109,7 +126,6 @@ function updateIndices(data, scope){
           };
 
           scope.entries[rowIndex - scope.indices.firstEntryCell.row - 1] = obj;
-          console.log('added obj at ' + rowIndex + ' date is ' + obj.date);
         }
       }
     }
