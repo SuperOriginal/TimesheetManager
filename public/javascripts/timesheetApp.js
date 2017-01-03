@@ -65,6 +65,16 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     $scope.indices.lastEntryCell.row++;
   }
 
+  $scope.parseJobs = function(){
+    $http.get('/api/spreadsheet', {params: {
+      access_token: $scope.accessToken,
+      sheet_id: $scope.jobsheet.id
+    }}).then(function(response){
+      $scope.jobdata = response;
+      readJobs(response.data.values, $scope);
+    });
+  }
+
 })
 
 .run(function($rootScope, $http){
@@ -133,4 +143,21 @@ function updateIndices(data, scope){
 //parse the job & task spreadsheet
 function readJobs(data, scope){
   if(!data) return;
+
+  var jobs = {};
+
+  for(var rowIndex = 0; rowIndex < data.length; rowIndex++){
+    var row = data[rowIndex];
+    for(var colIndex = 0; colIndex <= row.length; colIndex++){
+      var col = row[colIndex];
+      if(rowIndex === 0){
+        var split = col.split(':');
+        jobs[split[0]] = {number: split[0], type: split[1].toUpperCase(), tasks:[]};
+      }else{
+        jobs[data[0][colIndex].split(':')[0]].tasks.push(col);
+      }
+    }
+  }
+
+  scope.jobs = jobs;
 }

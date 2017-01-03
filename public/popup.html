@@ -1,10 +1,5 @@
 <!-- form to add entry will go here -->
 <div class="form-group">
   <label for="sel1">Select Job Type:</label>
-  <select class="form-control" id="sel1">
-    <option>1</option>
-    <option>2</option>
-    <option>3</option>
-    <option>4</option>
-  </select>
+  <select class="form-control" id="sel1" ng-model='form.selectedType' ng-options='job as job.number for job in jobs track by job.number'></select>
 </div>

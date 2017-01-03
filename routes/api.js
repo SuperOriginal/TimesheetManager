@@ -113,6 +113,7 @@ function getSheet(auth, id, callback) {
     if (err) {
       console.log('The API returned an error: ' + err);
       callback(err,null);
+      return;
     }
     callback(null,response);
   });
