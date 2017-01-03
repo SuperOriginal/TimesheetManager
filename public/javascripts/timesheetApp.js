@@ -42,7 +42,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
   $scope.popup = function(){
     swal({
-      title: '<i>HTML</i> <u>example</u>',
+      title: 'New Entry',
       type: 'info',
       html: $('<div>').attr('id', 'popup'),
       showCloseButton: true,
@@ -78,13 +78,11 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   };
 });
 
-//read cells in the sheet to update index variables for reference
+//read cells in the time sheet to update index variables for reference
 function updateIndices(data, scope){
-  console.log('original ' + scope.entries.length);
   //return if empty
   if(!data) return;
 
-  //col starts at 0(A) & rowIndex starts at 1 so 1 = first row
   var dateCol, updated = false;
   if(data.length > 0){
     for(var rowIndex = 0; rowIndex < data.length; rowIndex++){
@@ -130,5 +128,9 @@ function updateIndices(data, scope){
       }
     }
   }
-  console.log('updated');
+}
+
+//parse the job & task spreadsheet
+function readJobs(data, scope){
+  if(!data) return;
 }
