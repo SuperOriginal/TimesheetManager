@@ -24,7 +24,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 })
 
-.controller('editController', function($scope, $location, $http){
+.controller('editController', function($scope, $location, $http, $interpolate){
   window.sco = $scope;
   $scope.accessToken = $location.search()['token'];
   $scope.indices = {};
@@ -44,7 +44,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     swal({
       title: 'New Entry',
       type: 'info',
-      html: $('<div>').attr('id', 'popup'),
+      html: '<entry-popup></entry-popup>',
       showCloseButton: true,
       showCancelButton: true,
       confirmButtonText:
@@ -52,8 +52,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       cancelButtonText:
         'Cancel'
       });
-
-      $('#popup').load('/popup.html');
   }
 
   $scope.addEntry = function(){
@@ -75,6 +73,13 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     });
   }
 
+})
+
+.directive('entryPopup', function() {
+  return {
+    restrict: 'E',
+    templateUrl: '/popup.html'
+  };
 })
 
 .run(function($rootScope, $http){
@@ -150,11 +155,13 @@ function readJobs(data, scope){
     var row = data[rowIndex];
     for(var colIndex = 0; colIndex <= row.length; colIndex++){
       var col = row[colIndex];
-      if(rowIndex === 0){
-        var split = col.split(':');
-        jobs[split[0]] = {number: split[0], type: split[1].toUpperCase(), tasks:[]};
-      }else{
-        jobs[data[0][colIndex].split(':')[0]].tasks.push(col);
+      if(col){
+        if(rowIndex === 0){
+          var split = col.split(':');
+          jobs[split[0]] = {number: split[0], desc: split[1].toUpperCase(), tasks:[]};
+        }else{
+          jobs[data[0][colIndex].split(':')[0]].tasks.push(col);
+        }
       }
     }
   }
