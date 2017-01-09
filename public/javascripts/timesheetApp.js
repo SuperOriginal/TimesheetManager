@@ -1,4 +1,4 @@
-var timesheetApp = angular.module('timesheetApp', ['ui.router']);
+var timesheetApp = angular.module('timesheetApp', ['ui.router','oitozero.ngSweetAlert']);
 
 timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvider) {
 
@@ -24,7 +24,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 })
 
-.controller('editController', function($scope, $location, $http, $interpolate){
+.controller('editController', function($scope, $location, $http, $interpolate, SweetAlert, $compile){
   window.sco = $scope;
   $scope.accessToken = $location.search()['token'];
   $scope.indices = {};
@@ -41,10 +41,10 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 
   $scope.popup = function(){
-    swal({
+    SweetAlert.swal({
       title: 'New Entry',
       type: 'info',
-      html: '<entry-popup></entry-popup>',
+      html: $('<div>').attr('id', 'popup'),
       showCloseButton: true,
       showCancelButton: true,
       confirmButtonText:
@@ -52,6 +52,22 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       cancelButtonText:
         'Cancel'
       });
+      $('#popup').append('wadwad');
+      setTimeout(function() {
+        // The new element to be added
+        var $div = $("<entry-popup></entry-popup>");
+
+        // The parent of the new element
+        var $target = $("#popup");
+
+        angular.element($target).injector().invoke(function($compile) {
+          var $scope = angular.element($target).scope();
+          $target.append($compile($div)($scope));
+          // Finally, refresh the watch expressions in the new element
+          $scope.$apply();
+        });
+      }, 10);
+      console.log('appended');
   }
 
   $scope.addEntry = function(){
