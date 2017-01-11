@@ -1,8 +1,15 @@
 <!-- form to add entry will go here -->
 <div class="form-group">
   <label for="sel1">Select Job Type:</label>
-  <select class="form-control" id="sel1">
-    <option >1</option>
+  <select class="form-control" id="sel1" ng-model='select.job'>
+    <option></option>
     <option data-ng-repeat="job in jobs">#{{job.number}}: {{job.desc}}</option>
+  </select>
+</div>
+<div class="form-group" ng-hide="!select.job || select.job === ''">
+  <label for="sel1">Select Task:</label>
+  <select class="form-control" id="sel2" ng-model='select.task'>
+    <option></option>
+    <option data-ng-repeat="task in jobs[select.job.split(':')[0].substring(1)].job.tasks">{{task}}</option>
   </select>
 </div>

@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/modules', express.static(__dirname + '/node_modules/angular-sweetalert-2/lib/'));
+app.use('/modules', express.static(__dirname + '/node_modules/'));
 
 //Passport initialization
 app.use(require('express-session')({
