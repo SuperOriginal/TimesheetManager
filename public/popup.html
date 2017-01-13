@@ -10,6 +10,11 @@
   <label for="sel1">Select Task:</label>
   <select class="form-control" id="sel2" ng-model='select.task'>
     <option></option>
-    <option data-ng-repeat="task in jobs[select.job.split(':')[0].substring(1)].job.tasks">{{task}}</option>
+    <option ng-repeat="task in jobs[select.job.split(':')[0].substring(1)].tasks">{{task}}</option>
   </select>
+</div>
+<div ng-show='select.task'>
+  <button type="button" class="btn btn-default pull-left" ng-click="alert('cancel')">Cancel</button>
+  <button type="button" class="btn btn-primary pull-right" ng-click="alert('click')">Begin</button>
+  <br>
 </div>

@@ -24,17 +24,22 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 })
 
-.controller('editController', function($scope, $location, $http, $interpolate, $compile, ngDialog){
+.controller('editController', function($scope, $location, $http, ngDialog){
   window.sco = $scope;
   $scope.accessToken = $location.search()['token'];
   $scope.indices = {};
   $scope.entries = [];
+  $scope.spreadsheet = {};
+  $scope.jobsheet = {};
 
   $scope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
       access_token: $scope.accessToken,
       sheet_id: $scope.spreadsheet.id
     }}).then(function(response){
+      if(response && response !== ''){
+        Cookies.set('sheeturl', $scope.spreadsheet.id, {expires: 7});
+      }
       $scope.sheet_data = response;
       updateIndices(response.data.values, $scope);
     });
@@ -56,6 +61,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       indices: $scope.indices
     }});
     $scope.indices.lastEntryCell.row++;
+    $scope.submitUrl();
   }
 
   $scope.parseJobs = function(){
@@ -64,17 +70,28 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       sheet_id: $scope.jobsheet.id
     }}).then(function(response){
       $scope.jobdata = response;
+      if(response && response !== ''){
+        Cookies.set('joburl', $scope.jobsheet.id, {expires: 7});
+      }
       readJobs(response.data.values, $scope);
     });
   }
 
-})
+  var init = function () {
+    var jobsurl = Cookies.get('joburl');
+    if(jobsurl){
+      $scope.jobsheet.id = jobsurl;
+      $scope.parseJobs();
+    }
 
-.directive('entryPopup', function() {
-  return {
-    restrict: 'E',
-    templateUrl: '/popup.html'
+    var sheeturl = Cookies.get('sheeturl');
+    if(sheeturl){
+      $scope.spreadsheet.id = sheeturl;
+      $scope.submitUrl();
+    }
   };
+  init();
+
 })
 
 .run(function($rootScope, $http){
