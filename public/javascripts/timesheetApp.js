@@ -24,13 +24,15 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 })
 
-.controller('editController', function($scope, $location, $http, ngDialog){
+.controller('editController', function($scope, $window, $location, $http, ngDialog){
   window.sco = $scope;
+  window.ngd = ngDialog;
   $scope.accessToken = $location.search()['token'];
   $scope.indices = {};
   $scope.entries = [];
   $scope.spreadsheet = {};
   $scope.jobsheet = {};
+  $scope.counter = 0;
 
   $scope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
@@ -59,9 +61,14 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       access_token: $scope.accessToken,
       sheet_id: $scope.spreadsheet.id,
       indices: $scope.indices
-    }});
+    }}).then(function(response){
+      if(response.data.result === 'success'){
+        $scope.entries.push(response.data.data);
+      }else{
+        console.log(response.data.data);
+      }
+    });
     $scope.indices.lastEntryCell.row++;
-    $scope.submitUrl();
   }
 
   $scope.parseJobs = function(){
@@ -75,6 +82,26 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       }
       readJobs(response.data.values, $scope);
     });
+  }
+
+  $scope.beginTask = function(currentTask){
+    $scope.currentTask = currentTask;
+    startTimer($window, $scope.counter)
+  }
+
+  $scope.cancelTask = function(){
+    $scope.currentTask = undefined;
+  }
+
+  $scope.pauseTask = function(){
+    pauseTimer($window);
+  }
+
+  $scope.endTask = function(){
+    $scope.currentTask = undefined;
+    resetTimer($scope.timer, $scope.counter);
+
+    //TODO ADD ENTRY TO ENTIRES
   }
 
   var init = function () {
@@ -92,6 +119,14 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   };
   init();
 
+})
+
+.filter('secondsToDateTime', function() {
+    return function(seconds) {
+        var d = new Date(0,0,0,0,0,0,0);
+        d.setSeconds(seconds);
+        return d;
+    };
 })
 
 .run(function($rootScope, $http){
@@ -179,4 +214,19 @@ function readJobs(data, scope){
   }
 
   scope.jobs = jobs;
+}
+
+function startTimer($window,counter){
+  $window.setInterval(function(){
+    counter++;
+  },1000);
+}
+
+function pauseTimer($window){
+  $window.clearInterval();
+}
+
+function resetTimer(counter){
+  pauseTimer();
+  counter = 0;
 }

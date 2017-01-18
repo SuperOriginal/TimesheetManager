@@ -32,11 +32,11 @@ router.post('/spreadsheet', function(req, res){
   var date = new Date().toLocaleDateString();
 
   //TODO Write entry to GoogleSheets and shift footer down
-  writeSheet(accessToken, sheetId, indices, {date: date, desc: 'test', hours: 0}, function(err, res){
+  writeSheet(accessToken, sheetId, indices, {date: date, desc: 'test', hours: 0}, function(err, resp){
     if(err){
-      console.log('error: ' + err);
+      res.json({result: 'error', data: err});
     }else{
-      console.log('success');
+      res.json({result: 'success', data: {date: date, desc: 'test', hours: 0}});
     }
   });
 

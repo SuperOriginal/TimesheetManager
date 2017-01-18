@@ -30,6 +30,8 @@
     <input ng-model='jobsheet.id' type="text" name="url"><br>
     <input type="submit" value="Submit">
   </form>
+
+  <h2 ng-show='currentTask'>Currently working on {{currentTask}} for {{counter | secondsToDateTime | date:'HH:mm:ss'}}</h2>
   <table ng-show='entries' class="table table-striped">
     <thead>
       <tr>
