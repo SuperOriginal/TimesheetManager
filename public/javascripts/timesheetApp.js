@@ -24,7 +24,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 })
 
-.controller('editController', function($scope, $window, $location, $http, ngDialog){
+.controller('editController', function($scope, $interval, $location, $http, ngDialog){
   window.sco = $scope;
   window.ngd = ngDialog;
   $scope.accessToken = $location.search()['token'];
@@ -32,7 +32,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $scope.entries = [];
   $scope.spreadsheet = {};
   $scope.jobsheet = {};
-  $scope.counter = 0;
+
+  $scope.timer = {counter: 0, clock: undefined, currentTask: undefined};
 
   $scope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
@@ -84,23 +85,27 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     });
   }
 
-  $scope.beginTask = function(currentTask){
-    $scope.currentTask = currentTask;
-    startTimer($window, $scope.counter)
+  $scope.timer.beginTask = function(currentTask){
+    $scope.timer.currentTask = currentTask;
+    $scope.timer.clock = $interval(function(){
+      $scope.timer.counter++;
+    },1000);
+    ngDialog.closeAll();
   }
 
-  $scope.cancelTask = function(){
-    $scope.currentTask = undefined;
+  $scope.timer.cancelTask = function(){
+    $scope.timer.pauseTask();
+    $scope.timer.counter = 0;
+    $scope.timer.currentTask = undefined;
   }
 
-  $scope.pauseTask = function(){
-    pauseTimer($window);
+  $scope.timer.pauseTask = function(){
+    $interval.cancel($scope.timer.clock);
   }
 
-  $scope.endTask = function(){
-    $scope.currentTask = undefined;
-    resetTimer($scope.timer, $scope.counter);
-
+  $scope.timer.endTask = function(){
+    $scope.timer.currentTask = undefined;
+    $scope.timer.pauseTask();
     //TODO ADD ENTRY TO ENTIRES
   }
 
@@ -214,19 +219,4 @@ function readJobs(data, scope){
   }
 
   scope.jobs = jobs;
-}
-
-function startTimer($window,counter){
-  $window.setInterval(function(){
-    counter++;
-  },1000);
-}
-
-function pauseTimer($window){
-  $window.clearInterval();
-}
-
-function resetTimer(counter){
-  pauseTimer();
-  counter = 0;
 }

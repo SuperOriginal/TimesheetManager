@@ -31,7 +31,11 @@
     <input type="submit" value="Submit">
   </form>
 
-  <h2 ng-show='currentTask'>Currently working on {{currentTask}} for {{counter | secondsToDateTime | date:'HH:mm:ss'}}</h2>
+  <div>
+    <h2 >Currently working on {{timer.currentTask}} for {{timer.counter | secondsToDateTime | date:'HH:mm:ss'}}</h2>
+  </div>
+
+
   <table ng-show='entries' class="table table-striped">
     <thead>
       <tr>
