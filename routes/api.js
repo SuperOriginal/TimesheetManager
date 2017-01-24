@@ -1,5 +1,6 @@
 var express = require('express');
 var google = require('googleapis');
+var refresh = require('passport-oauth2-refresh');
 var sheets = google.sheets('v4');
 var router = express.Router();
 
@@ -24,22 +25,30 @@ router.post('/spreadsheet', function(req, res){
   var accessToken = req.body.params.access_token;
   var indices = req.body.params.indices;
 
-  //TODO get required variables
-  // var firstIndex = params['first-index'];
-  // var lastIndex = params['last-index'];
-  // var desc = params['desc'];
-  // var hours = params['hours'];
+  var job = req.body.params.job.job;
+  var task = req.body.params.job.task;
+  var hours = req.body.params.hours;
   var date = new Date().toLocaleDateString();
 
-  //TODO Write entry to GoogleSheets and shift footer down
-  writeSheet(accessToken, sheetId, indices, {date: date, desc: 'test', hours: 0}, function(err, resp){
+  writeSheet(accessToken, sheetId, indices, info = {date: date, job: job, task: task, hours: hours}, function(err, resp){
     if(err){
       res.json({result: 'error', data: err});
     }else{
-      res.json({result: 'success', data: {date: date, desc: 'test', hours: 0}});
+      res.json({result: 'success', data: info});
     }
   });
 
+});
+
+//obtain new access token if old is expired
+router.get('/refreshtoken', function(req, res){
+  refresh.requestNewAccessToken('google', req.refreshToken, function(err, accessToken, refreshToken) {
+    if(err){
+      res.send(err);
+    }else{
+      res.send(accessToken);
+    }
+  });
 });
 
 function writeSheet(auth, id, indices, data, callback){
@@ -80,7 +89,10 @@ function writeSheet(auth, id, indices, data, callback){
           userEnteredFormat: {horizontalAlignment: 'RIGHT'}
         },
         {
-          userEnteredValue: {stringValue: data.desc}
+          userEnteredValue: {stringValue: data.job},
+        },
+        {
+          userEnteredValue: {stringValue: data.task}
         },
         {
           userEnteredValue: {numberValue: data.hours}

@@ -31,8 +31,9 @@
     <input type="submit" value="Submit">
   </form>
 
-  <div>
-    <h2 >Currently working on {{timer.currentTask}} for {{timer.counter | secondsToDateTime | date:'HH:mm:ss'}}</h2>
+  <div ng-show='timer.currentTask'>
+    <h2 >Currently working on {{timer.currentTask.job}} - {{timer.currentTask.task}} for {{timer.counter | secondsToDateTime | date:'HH:mm:ss'}}</h2>
+    <button type="button" name="button" ng-click='timer.endTask()'>Stop</button>
   </div>
 
 
@@ -40,14 +41,16 @@
     <thead>
       <tr>
         <th>Date</th>
-        <th>Description</th>
+        <th>Job</th>
+        <th>Task</th>
         <th>Hours</th>
       </tr>
     </thead>
     <tbody>
       <tr data-ng-repeat="entry in entries track by $index">
         <td>{{ entry.date }}</td>
-        <td>{{ entry.desc }}</td>
+        <td>{{ entry.job }}</td>
+        <td>{{ entry.task }}</td>
         <td>{{ entry.hours }}</td>
       </tr>
     </tbody>

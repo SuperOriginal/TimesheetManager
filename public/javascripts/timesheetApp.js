@@ -52,7 +52,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $scope.popup = function(){
     ngDialog.open({
       template: '/popup.html',
-      controller: 'editController',
       scope: $scope
     });
   }
@@ -61,7 +60,9 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     $http.post('/api/spreadsheet', {params: {
       access_token: $scope.accessToken,
       sheet_id: $scope.spreadsheet.id,
-      indices: $scope.indices
+      indices: $scope.indices,
+      job: $scope.timer.currentTask,
+      hours: $scope.timer.counter
     }}).then(function(response){
       if(response.data.result === 'success'){
         $scope.entries.push(response.data.data);
@@ -104,9 +105,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 
   $scope.timer.endTask = function(){
-    $scope.timer.currentTask = undefined;
-    $scope.timer.pauseTask();
-    //TODO ADD ENTRY TO ENTIRES
+    $scope.addEntry();
+    $scope.timer.cancelTask();
   }
 
   var init = function () {
