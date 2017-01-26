@@ -14,6 +14,9 @@ router.get('/spreadsheet', function(req, res){
     if(err){
       res.redirect('/#error');
     }else{
+      if(headerExists(resp.values)){
+        writeHeader(accessToken, sheetId);
+      }
       res.json(resp);
     }
   });
@@ -51,29 +54,127 @@ router.get('/refreshtoken', function(req, res){
   });
 });
 
+function headerExists(data){
+  return !data || !data[0] || !data[0][0];
+}
+
+function getHeaderRequest(){
+  var requests = [];
+  requests.push({
+    updateCells: {
+      start: {
+        sheetId: 0,
+        rowIndex: 0,
+        columnIndex: 0
+      },
+      rows: [{
+        values: [{
+            userEnteredValue: {stringValue: 'Date'},
+            userEnteredFormat: {
+                horizontalAlignment: 'CENTER',
+                textFormat: {bold: true}
+            }
+          },
+          {
+            userEnteredValue: {stringValue: 'Job Number'},
+            userEnteredFormat: {
+                horizontalAlignment: 'CENTER',
+                textFormat: {bold: true}
+            }
+          },
+          {
+            userEnteredValue: {stringValue: 'Job Name'},
+            userEnteredFormat: {
+                horizontalAlignment: 'CENTER',
+                textFormat: {bold: true}
+            }
+          },
+          {
+            userEnteredValue: {stringValue: 'Description'},
+            userEnteredFormat: {
+                horizontalAlignment: 'CENTER',
+                textFormat: {bold: true}
+            }
+          },
+          {
+            userEnteredValue: {stringValue: 'Hours'},
+            userEnteredFormat: {
+                horizontalAlignment: 'CENTER',
+                textFormat: {bold: true}
+            }
+          }]
+        }],
+        fields: 'userEnteredValue,userEnteredFormat(horizontalAlignment,textFormat)'
+      }
+    });
+
+    requests.push({
+      updateBorders: {
+        range: {
+          sheetId: 0,
+          startRowIndex: 0,
+          endRowIndex: 1,
+          startColumnIndex: 0,
+          endColumnIndex: 5
+        },
+        right: {
+          style: 'SOLID',
+          width: 1,
+          color:{
+            red: 0,
+            green: 0,
+            blue: 0
+          }
+        },
+        bottom: {
+          style: 'SOLID',
+          width: 1,
+          color:{
+            red: 0,
+            green: 0,
+            blue: 0
+          }
+        },
+      }
+    });
+
+    return requests;
+};
+
+function writeHeader(token, sheetid){
+  sendBatchUpdateRequest({
+    access_token: token,
+    spreadsheetId: sheetid,
+    resource: {
+      requests: getHeaderRequest()
+    }
+  }, function(err, res){
+    if(err){
+      console.log(err);
+      //TODO ERR
+    }else{
+      console.log('wrote header');
+      //TODO SUCCESS
+    }
+  });
+}
+
+function sendBatchUpdateRequest(options, callback){
+  sheets.spreadsheets.batchUpdate(options, function(err, res){
+    callback(err, res);
+  })
+}
+
 function writeSheet(auth, id, indices, data, callback){
   var requests = [];
   var row = indices.lastEntryCell.row-1, col = indices.lastEntryCell.col;
 
-  //move all footing down by one
-  requests.push({
-    cutPaste: {
-      source: {
-        sheetId: 0,
-        startRowIndex: (row+1),
-        //TODO possibly make this dynamic
-        endRowIndex: 100,
-        startColumnIndex: 0,
-        endColumnIndex:10
-      },
-      destination: {
-        sheetId: 0,
-        rowIndex: (row+2),
-        columnIndex: 0
-      },
-      pasteType: 'PASTE_NORMAL'
-    }
-  });
+  var job = data.job.job.split(':');
+  var num = job[0].substring(1);
+  var name = job[1];
+
+  console.log(num);
+  console.log(name);
 
   //write entry
   requests.push({
@@ -86,16 +187,23 @@ function writeSheet(auth, id, indices, data, callback){
       rows: [{
         values: [{
           userEnteredValue: {stringValue: data.date},
-          userEnteredFormat: {horizontalAlignment: 'RIGHT'}
+          userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
-          userEnteredValue: {stringValue: data.job},
+          userEnteredValue: {stringValue: num},
+          userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
-          userEnteredValue: {stringValue: data.task}
+          userEnteredValue: {stringValue: name},
+          userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
-          userEnteredValue: {numberValue: data.hours}
+          userEnteredValue: {stringValue: data.task},
+          userEnteredFormat: {horizontalAlignment: 'CENTER'}
+        },
+        {
+          userEnteredValue: {numberValue: data.hours},
+          userEnteredFormat: {horizontalAlignment: 'CENTER'}
         }]
       }],
       fields: 'userEnteredValue,userEnteredFormat(horizontalAlignment)'
@@ -110,17 +218,17 @@ function writeSheet(auth, id, indices, data, callback){
     resource: batchUpdateRequest
   }
 
-  sheets.spreadsheets.batchUpdate(options, function(err, res){
+  sendBatchUpdateRequest(options, function(err, res){
     callback(err, res);
   })
 }
 
-//use api to retrieve sheet data from cells A1 to J500 - arbitrary numbers, should be good enough
+//use api to retrieve sheet data from cells A1 to F200 - arbitrary numbers, should be good enough
 function getSheet(auth, id, callback) {
   sheets.spreadsheets.values.get({
     access_token: auth,
     spreadsheetId: id,
-    range: 'Sheet1!A1:J500'
+    range: 'Sheet1!A1:F200'
   }, function(err, response) {
     if (err) {
       console.log('The API returned an error: ' + err);

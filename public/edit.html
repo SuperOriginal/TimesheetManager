@@ -41,7 +41,8 @@
     <thead>
       <tr>
         <th>Date</th>
-        <th>Job</th>
+        <th>Job Number</th>
+        <th>Job Name</th>
         <th>Task</th>
         <th>Hours</th>
       </tr>
@@ -49,7 +50,8 @@
     <tbody>
       <tr data-ng-repeat="entry in entries track by $index">
         <td>{{ entry.date }}</td>
-        <td>{{ entry.job }}</td>
+        <td>{{ entry.job.number }}</td>
+        <td>{{ entry.job.name }}</td>
         <td>{{ entry.task }}</td>
         <td>{{ entry.hours }}</td>
       </tr>
