@@ -28,12 +28,13 @@ router.post('/spreadsheet', function(req, res){
   var accessToken = req.body.params.access_token;
   var indices = req.body.params.indices;
 
-  var job = req.body.params.job.job;
+  var job = req.body.params.job;
   var task = req.body.params.job.task;
   var hours = req.body.params.hours;
   var date = new Date().toLocaleDateString();
 
-  writeSheet(accessToken, sheetId, indices, info = {date: date, job: job, task: task, hours: hours}, function(err, resp){
+  writeSheet(accessToken, sheetId, indices, info = {date: date, job: {name: /*bla*/ , number: /*bla*/ }, task: task, hours: hours}, function(err, resp){
+    //TODO handle job name parsing here
     if(err){
       res.json({result: 'error', data: err});
     }else{
@@ -167,11 +168,7 @@ function sendBatchUpdateRequest(options, callback){
 
 function writeSheet(auth, id, indices, data, callback){
   var requests = [];
-  var row = indices.lastEntryCell.row-1, col = indices.lastEntryCell.col;
-
-  var job = data.job.job.split(':');
-  var num = job[0].substring(1);
-  var name = job[1];
+  var row = indices.lastEntryCell.row, col = indices.lastEntryCell.col;
 
   console.log(num);
   console.log(name);
@@ -190,15 +187,15 @@ function writeSheet(auth, id, indices, data, callback){
           userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
-          userEnteredValue: {stringValue: num},
+          userEnteredValue: {stringValue: data.job.number},
           userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
-          userEnteredValue: {stringValue: name},
+          userEnteredValue: {stringValue: data.job.name},
           userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
-          userEnteredValue: {stringValue: data.task},
+          userEnteredValue: {stringValue: data.desc},
           userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {

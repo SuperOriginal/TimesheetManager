@@ -28,7 +28,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   window.sco = $scope;
   window.ngd = ngDialog;
   $scope.accessToken = $location.search()['token'];
-  $scope.indices = {};
+  $scope.indices = {lastEntryCell:{row:1, col:0}};
   $scope.entries = [];
   $scope.spreadsheet = {};
   $scope.jobsheet = {};
@@ -65,6 +65,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       hours: $scope.timer.counter
     }}).then(function(response){
       if(response.data.result === 'success'){
+        console.log(response.data.data);
         $scope.entries.push(response.data.data);
       }else{
         console.log(response.data.data);
@@ -127,11 +128,11 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 })
 
 .filter('secondsToDateTime', function() {
-    return function(seconds) {
-        var d = new Date(0,0,0,0,0,0,0);
-        d.setSeconds(seconds);
-        return d;
-    };
+  return function(seconds) {
+    var d = new Date(0,0,0,0,0,0,0);
+    d.setSeconds(seconds);
+    return d;
+  };
 })
 
 .run(function($rootScope, $http){
@@ -150,48 +151,32 @@ function updateIndices(data, scope){
   //return if empty
   if(!data) return;
 
-  var dateCol, updated = false;
+  var dateCol = 0,
+  updated = false,
+  firstEntryRow = 0;
+
   if(data.length > 0){
-    for(var rowIndex = 0; rowIndex < data.length; rowIndex++){
+    //Start at second row since first is header
+    for(var rowIndex = 1; rowIndex < data.length; rowIndex++){
       var row = data[rowIndex];
-      for(var colIndex = 0; colIndex <= row.length; colIndex++){
-        var col = row[colIndex];
-        if(col === 'Date'){
-          scope.indices.firstEntryCell = {row: rowIndex, col: colIndex};
-          dateCol = colIndex;
-        }
-
-        if(col === 'Hours'){
-          scope.indices.hoursCol = colIndex;
-        }
-
-        if(col === 'Description'){
-          scope.indices.descCol = colIndex;
-        }
-      }
-
-      if(scope.indices.firstEntryCell && rowIndex > scope.indices.firstEntryCell.row){
+        if(rowIndex > firstEntryRow){
           //if we are in the entry section and we find an empty row, it is the last entry
-        if((!row || row.length === 0) && !updated){
-
-            //If the old last index is longer than the current one (user deleted some entries), then
-            //we want to remove the extra elements.
-          if(scope.indices.lastEntryCell && scope.indices.lastEntryCell.row > rowIndex){
-            scope.entries.splice(rowIndex - scope.indices.firstEntryCell.row - 1);
+          if((!row || row.length === 0) || (rowIndex === data.length)){
+            //now we'll update to the new index
+            scope.indices.lastEntryCell = {row: rowIndex , col: dateCol};
+            break;
           }
-          //now we'll update to the new index
-          scope.indices.lastEntryCell = {row: rowIndex , col: dateCol};
-          updated = true;
-        }
-        if(!updated){
           var obj = {
             date: data[rowIndex][dateCol],
-            desc: data[rowIndex][scope.indices.descCol],
-            hours: data[rowIndex][scope.indices.hoursCol]
+            job: {
+              number: data[rowIndex][dateCol+1],
+              name: data[rowIndex][dateCol+2]
+            },
+            task: data[rowIndex][dateCol+3],
+            hours: data[rowIndex][dateCol+4]
           };
 
-          scope.entries[rowIndex - scope.indices.firstEntryCell.row - 1] = obj;
-        }
+          scope.entries.push(obj);
       }
     }
   }
