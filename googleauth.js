@@ -5,6 +5,7 @@ var credentials = require('./credentials.json');
 module.exports = function(passport){
 
   passport.serializeUser(function(user, done) {
+    console.log('LOGGING SERIALIZE!!!!' + user);
     done(null, user);
   });
 

@@ -12,12 +12,25 @@ router.get('/spreadsheet', function(req, res){
   var accessToken = params['access_token'];
   getSheet(accessToken, sheetId, function(err, resp){
     if(err){
-      res.redirect('/#error');
+      res.json({
+        result: 'error',
+        data: 'error getting sheet data'
+      });
     }else{
-      if(headerExists(resp.values)){
-        writeHeader(accessToken, sheetId);
+      if(!headerExists(resp.values)){
+        writeHeader(accessToken, sheetId, function(err, res){
+          if(err){
+            res.json({
+              result: 'error',
+              data: 'error writing header'
+            });
+          }
+        });
       }
-      res.json(resp);
+      res.json({
+        result: 'success',
+        data: resp
+      })
     }
   });
 });
@@ -30,11 +43,24 @@ router.post('/spreadsheet', function(req, res){
 
   var job = req.body.params.job;
   var task = req.body.params.job.task;
-  var hours = req.body.params.hours;
+  var seconds = req.body.params.hours;
   var date = new Date().toLocaleDateString();
 
-  writeSheet(accessToken, sheetId, indices, info = {date: date, job: {name: /*bla*/ , number: /*bla*/ }, task: task, hours: hours}, function(err, resp){
-    //TODO handle job name parsing here
+  if(seconds < 360){
+    res.json({
+      result: 'error',
+      data: 'not enough time'
+    });
+  }
+
+  if(!job || !task){
+    res.json({
+      result: 'error',
+      data: 'missing variables'
+    });
+  }
+
+  writeSheet(accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, task: task, hours: round(convertToHours(seconds),1)}, function(err, resp){
     if(err){
       res.json({result: 'error', data: err});
     }else{
@@ -48,15 +74,15 @@ router.post('/spreadsheet', function(req, res){
 router.get('/refreshtoken', function(req, res){
   refresh.requestNewAccessToken('google', req.refreshToken, function(err, accessToken, refreshToken) {
     if(err){
-      res.send(err);
+      res.json({result:'error', data:err});
     }else{
-      res.send(accessToken);
+      res.send({result:'success', data:accessToken});
     }
   });
 });
 
 function headerExists(data){
-  return !data || !data[0] || !data[0][0];
+  return data && data[0];
 }
 
 function getHeaderRequest(){
@@ -142,7 +168,7 @@ function getHeaderRequest(){
     return requests;
 };
 
-function writeHeader(token, sheetid){
+function writeHeader(token, sheetid, callback){
   sendBatchUpdateRequest({
     access_token: token,
     spreadsheetId: sheetid,
@@ -150,13 +176,7 @@ function writeHeader(token, sheetid){
       requests: getHeaderRequest()
     }
   }, function(err, res){
-    if(err){
-      console.log(err);
-      //TODO ERR
-    }else{
-      console.log('wrote header');
-      //TODO SUCCESS
-    }
+    callback(err,res);
   });
 }
 
@@ -169,10 +189,6 @@ function sendBatchUpdateRequest(options, callback){
 function writeSheet(auth, id, indices, data, callback){
   var requests = [];
   var row = indices.lastEntryCell.row, col = indices.lastEntryCell.col;
-
-  console.log(num);
-  console.log(name);
-
   //write entry
   requests.push({
     updateCells: {
@@ -187,7 +203,7 @@ function writeSheet(auth, id, indices, data, callback){
           userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
-          userEnteredValue: {stringValue: data.job.number},
+          userEnteredValue: {numberValue: data.job.number},
           userEnteredFormat: {horizontalAlignment: 'CENTER'}
         },
         {
@@ -236,4 +252,11 @@ function getSheet(auth, id, callback) {
   });
 }
 
+function round(value, decimals) {
+  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
+
+function convertToHours(sec){
+  return sec/60/60;
+}
 module.exports = router;

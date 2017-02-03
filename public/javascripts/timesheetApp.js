@@ -40,11 +40,14 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       access_token: $scope.accessToken,
       sheet_id: $scope.spreadsheet.id
     }}).then(function(response){
-      if(response && response !== ''){
+      if(response.data.result === 'success'){
         Cookies.set('sheeturl', $scope.spreadsheet.id, {expires: 7});
+        $scope.sheet_data = response;
+        updateIndices(response.data.data.values, $scope);
+      }else{
+        //TODO ERROR POPUP
+        console.log(response);
       }
-      $scope.sheet_data = response;
-      updateIndices(response.data.values, $scope);
     });
   }
 
@@ -65,9 +68,9 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       hours: $scope.timer.counter
     }}).then(function(response){
       if(response.data.result === 'success'){
-        console.log(response.data.data);
         $scope.entries.push(response.data.data);
       }else{
+        //TODO ERROR POPUP
         console.log(response.data.data);
       }
     });
@@ -79,11 +82,14 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       access_token: $scope.accessToken,
       sheet_id: $scope.jobsheet.id
     }}).then(function(response){
-      $scope.jobdata = response;
-      if(response && response !== ''){
+      if(response.data.result === 'success'){
+        $scope.jobdata = response;
         Cookies.set('joburl', $scope.jobsheet.id, {expires: 7});
+        readJobs(response.data.data.values, $scope);
+      }else{
+        //TODO ERROR POPUP
+        console.log(response.data.data);
       }
-      readJobs(response.data.values, $scope);
     });
   }
 
@@ -150,7 +156,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 function updateIndices(data, scope){
   //return if empty
   if(!data) return;
-
+  
   var dateCol = 0,
   updated = false,
   firstEntryRow = 0;
@@ -161,9 +167,9 @@ function updateIndices(data, scope){
       var row = data[rowIndex];
         if(rowIndex > firstEntryRow){
           //if we are in the entry section and we find an empty row, it is the last entry
-          if((!row || row.length === 0) || (rowIndex === data.length)){
+          if((!row || row.length === 0) || (rowIndex === data.length-1)){
             //now we'll update to the new index
-            scope.indices.lastEntryCell = {row: rowIndex , col: dateCol};
+            scope.indices.lastEntryCell = {row: rowIndex+1 , col: dateCol};
             break;
           }
           var obj = {
