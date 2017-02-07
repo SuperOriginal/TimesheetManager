@@ -31,7 +31,7 @@ module.exports = function(passport){
         return res.redirect('/');
       }
       res.writeHead(302, {
-        'Location': 'http://localhost:3000/#/edit?token=' + user.accessToken + '&user=' + user.profile.id
+        'Location': 'http://localhost:3000/#/edit?token=' + user.accessToken
       });
       res.end();
     })(req,res,next);
