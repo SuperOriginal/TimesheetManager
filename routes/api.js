@@ -4,41 +4,58 @@ var refresh = require('passport-oauth2-refresh');
 var sheets = google.sheets('v4');
 var router = express.Router();
 
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated())
+  return next();
+  res.redirect('/');
+}
+
+router.use(isAuthenticated);
+
 //get all cells in spreadsheet
 router.get('/spreadsheet', function(req, res){
   var params = req.query;
 
   var sheetId = params['sheet_id'];
-  var accessToken = params['access_token'];
-  getSheet(accessToken, sheetId, function(err, resp){
+  getSheet(req.user.accessToken+, sheetId, function c(err, resp){
     if(err){
-      res.json({
-        result: 'error',
-        data: 'error getting sheet data'
-      });
-    }else{
-      if(!headerExists(resp.values)){
-        writeHeader(accessToken, sheetId, function(err, res){
+      if(err.code === 401){
+        refresh.requestNewAccessToken('google', req.user.refreshToken, function(err, accessToken, refreshToken) {
           if(err){
-            res.json({
+            return res.json({result:'error', data:err});
+          }else{
+            //TODO fix recursing
+            req.user.accessToken = accessToken;
+            getSheet(req.user.accessToken, sheetId, c);
+          }
+        });
+      }else{
+        return res.json({
+          result: 'error',
+          data: 'error getting sheet data'
+        });
+      }
+    }
+    if(!headerExists(resp.values)){
+        writeHeader(req.user.accessToken, sheetId, function(err, res){
+          if(err){
+            return res.json({
               result: 'error',
               data: 'error writing header'
             });
           }
         });
       }
-      res.json({
+      return res.json({
         result: 'success',
         data: resp
       })
-    }
   });
 });
 
 //create new entry in spreadsheet
 router.post('/spreadsheet', function(req, res){
   var sheetId = req.body.params.sheet_id;
-  var accessToken = req.body.params.access_token;
   var indices = req.body.params.indices;
 
   var job = req.body.params.job;
@@ -60,7 +77,7 @@ router.post('/spreadsheet', function(req, res){
     });
   }
 
-  writeSheet(accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, task: task, hours: round(convertToHours(seconds),1)}, function(err, resp){
+  writeSheet(req.user.accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, task: task, hours: round(convertToHours(seconds),1)}, function(err, resp){
     if(err){
       res.json({result: 'error', data: err});
     }else{
@@ -70,16 +87,16 @@ router.post('/spreadsheet', function(req, res){
 
 });
 
-//obtain new access token if old is expired
-router.get('/refreshtoken', function(req, res){
-  refresh.requestNewAccessToken('google', req.refreshToken, function(err, accessToken, refreshToken) {
-    if(err){
-      res.json({result:'error', data:err});
-    }else{
-      res.send({result:'success', data:accessToken});
-    }
-  });
-});
+// obtain new access token if old is expired
+// router.get('/refreshtoken', function(req, res){
+//   refresh.requestNewAccessToken('google', req.user.refreshToken, function(err, accessToken, refreshToken) {
+//     if(err){
+//       res.json({result:'error', data:err});
+//     }else{
+//       res.send({result:'success', data:accessToken});
+//     }
+//   });
+// });
 
 function headerExists(data){
   return data && data[0];
@@ -96,76 +113,76 @@ function getHeaderRequest(){
       },
       rows: [{
         values: [{
-            userEnteredValue: {stringValue: 'Date'},
-            userEnteredFormat: {
-                horizontalAlignment: 'CENTER',
-                textFormat: {bold: true}
-            }
-          },
-          {
-            userEnteredValue: {stringValue: 'Job Number'},
-            userEnteredFormat: {
-                horizontalAlignment: 'CENTER',
-                textFormat: {bold: true}
-            }
-          },
-          {
-            userEnteredValue: {stringValue: 'Job Name'},
-            userEnteredFormat: {
-                horizontalAlignment: 'CENTER',
-                textFormat: {bold: true}
-            }
-          },
-          {
-            userEnteredValue: {stringValue: 'Description'},
-            userEnteredFormat: {
-                horizontalAlignment: 'CENTER',
-                textFormat: {bold: true}
-            }
-          },
-          {
-            userEnteredValue: {stringValue: 'Hours'},
-            userEnteredFormat: {
-                horizontalAlignment: 'CENTER',
-                textFormat: {bold: true}
-            }
-          }]
-        }],
-        fields: 'userEnteredValue,userEnteredFormat(horizontalAlignment,textFormat)'
-      }
-    });
-
-    requests.push({
-      updateBorders: {
-        range: {
-          sheetId: 0,
-          startRowIndex: 0,
-          endRowIndex: 1,
-          startColumnIndex: 0,
-          endColumnIndex: 5
-        },
-        right: {
-          style: 'SOLID',
-          width: 1,
-          color:{
-            red: 0,
-            green: 0,
-            blue: 0
+          userEnteredValue: {stringValue: 'Date'},
+          userEnteredFormat: {
+            horizontalAlignment: 'CENTER',
+            textFormat: {bold: true}
           }
         },
-        bottom: {
-          style: 'SOLID',
-          width: 1,
-          color:{
-            red: 0,
-            green: 0,
-            blue: 0
+        {
+          userEnteredValue: {stringValue: 'Job Number'},
+          userEnteredFormat: {
+            horizontalAlignment: 'CENTER',
+            textFormat: {bold: true}
           }
         },
-      }
-    });
+        {
+          userEnteredValue: {stringValue: 'Job Name'},
+          userEnteredFormat: {
+            horizontalAlignment: 'CENTER',
+            textFormat: {bold: true}
+          }
+        },
+        {
+          userEnteredValue: {stringValue: 'Description'},
+          userEnteredFormat: {
+            horizontalAlignment: 'CENTER',
+            textFormat: {bold: true}
+          }
+        },
+        {
+          userEnteredValue: {stringValue: 'Hours'},
+          userEnteredFormat: {
+            horizontalAlignment: 'CENTER',
+            textFormat: {bold: true}
+          }
+        }]
+      }],
+      fields: 'userEnteredValue,userEnteredFormat(horizontalAlignment,textFormat)'
+    }
+  });
 
-    return requests;
+  requests.push({
+    updateBorders: {
+      range: {
+        sheetId: 0,
+        startRowIndex: 0,
+        endRowIndex: 1,
+        startColumnIndex: 0,
+        endColumnIndex: 5
+      },
+      right: {
+        style: 'SOLID',
+        width: 1,
+        color:{
+          red: 0,
+          green: 0,
+          blue: 0
+        }
+      },
+      bottom: {
+        style: 'SOLID',
+        width: 1,
+        color:{
+          red: 0,
+          green: 0,
+          blue: 0
+        }
+      },
+    }
+  });
+
+  return requests;
 };
 
 function writeHeader(token, sheetid, callback){

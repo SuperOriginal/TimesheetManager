@@ -5,12 +5,10 @@ var credentials = require('./credentials.json');
 module.exports = function(passport){
 
   passport.serializeUser(function(user, done) {
-    console.log('serialize: ' + user);
     done(null, user);
   });
 
   passport.deserializeUser(function(user, done) {
-    console.log('deserialize: ' + user);
     done(null, user);
   });
 
@@ -25,8 +23,13 @@ module.exports = function(passport){
         accessToken: accessToken,
         refreshToken: refreshToken
       }
-      console.log('adding user ' + refreshToken);
-      return done(null, user)
+
+      request.login(user, function(err){
+        if(err){
+          return next(err);
+        }
+        return done(null,user);
+      });
     }
   );
   passport.use(strategy);

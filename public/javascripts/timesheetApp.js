@@ -37,7 +37,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
   $scope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
-      access_token: $scope.accessToken,
       sheet_id: $scope.spreadsheet.id
     }}).then(function(response){
       if(response.data.result === 'success'){
@@ -61,7 +60,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
   $scope.addEntry = function(){
     $http.post('/api/spreadsheet', {params: {
-      access_token: $scope.accessToken,
       sheet_id: $scope.spreadsheet.id,
       indices: $scope.indices,
       job: $scope.timer.currentTask,
@@ -79,7 +77,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
   $scope.parseJobs = function(){
     $http.get('/api/spreadsheet', {params: {
-      access_token: $scope.accessToken,
       sheet_id: $scope.jobsheet.id
     }}).then(function(response){
       if(response.data.result === 'success'){
@@ -156,7 +153,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 function updateIndices(data, scope){
   //return if empty
   if(!data) return;
-  
+
   var dateCol = 0,
   updated = false,
   firstEntryRow = 0;
