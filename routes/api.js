@@ -7,6 +7,7 @@ var router = express.Router();
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated())
   return next();
+
   res.redirect('/');
 }
 
@@ -14,43 +15,60 @@ router.use(isAuthenticated);
 
 //get all cells in spreadsheet
 router.get('/spreadsheet', function(req, res){
+  var retries = 5;
   var params = req.query;
 
   var sheetId = params['sheet_id'];
-  getSheet(req.user.accessToken+, sheetId, function c(err, resp){
-    if(err){
-      if(err.code === 401){
-        refresh.requestNewAccessToken('google', req.user.refreshToken, function(err, accessToken, refreshToken) {
-          if(err){
-            return res.json({result:'error', data:err});
-          }else{
-            //TODO fix recursing
-            req.user.accessToken = accessToken;
-            getSheet(req.user.accessToken, sheetId, c);
-          }
-        });
-      }else{
-        return res.json({
-          result: 'error',
-          data: 'error getting sheet data'
-        });
-      }
+
+  var sendError = function(error){
+    return res.json({result:'error', data:error});
+  }
+
+  var makeRequest = function(accessToken, refreshToken){
+    retries--;
+    if(!retries) {
+      // Couldn't refresh the access token.
+      return sendError('No more retries');
     }
-    if(!headerExists(resp.values)){
-        writeHeader(req.user.accessToken, sheetId, function(err, res){
-          if(err){
-            return res.json({
-              result: 'error',
-              data: 'error writing header'
+    getSheet(accessToken, sheetId, function(err, resp){
+      if(err){
+        if(err.code === 401){
+          refresh.requestNewAccessToken('google', refreshToken, function(tokenError, newAccessToken, newRefreshToken) {
+            if(tokenError || !newAccessToken){
+              console.log(tokenError);
+              return sendError(tokenError);
+            }
+            makeRequest(newAccessToken, newRefreshToken);
+          });
+        }else{
+          return res.json({
+            result: 'error',
+            data: 'error getting sheet data'
+          });
+        }
+      }else{
+        if(!headerExists(resp.values)){
+            writeHeader(accessToken, sheetId, function(err, res){
+              if(err){
+                return res.json({
+                  result: 'error',
+                  data: 'error writing header'
+                });
+              }
             });
-          }
+        }
+        req.login({accessToken: accessToken, refreshToken: refreshToken}, function(err){
+          if(err)
+          sendError(err);
+        });
+        return res.json({
+          result: 'success',
+          data: resp
         });
       }
-      return res.json({
-        result: 'success',
-        data: resp
-      })
-  });
+    });
+  }
+  makeRequest(req.user.accessToken, req.user.refreshToken);
 });
 
 //create new entry in spreadsheet
@@ -64,14 +82,14 @@ router.post('/spreadsheet', function(req, res){
   var date = new Date().toLocaleDateString();
 
   if(seconds < 360){
-    res.json({
+    return res.json({
       result: 'error',
       data: 'not enough time'
     });
   }
 
   if(!job || !task){
-    res.json({
+    return res.json({
       result: 'error',
       data: 'missing variables'
     });
@@ -79,24 +97,13 @@ router.post('/spreadsheet', function(req, res){
 
   writeSheet(req.user.accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, task: task, hours: round(convertToHours(seconds),1)}, function(err, resp){
     if(err){
-      res.json({result: 'error', data: err});
+      return res.json({result: 'error', data: err});
     }else{
-      res.json({result: 'success', data: info});
+      return res.json({result: 'success', data: info});
     }
   });
 
 });
-
-// obtain new access token if old is expired
-// router.get('/refreshtoken', function(req, res){
-//   refresh.requestNewAccessToken('google', req.user.refreshToken, function(err, accessToken, refreshToken) {
-//     if(err){
-//       res.json({result:'error', data:err});
-//     }else{
-//       res.send({result:'success', data:accessToken});
-//     }
-//   });
-// });
 
 function headerExists(data){
   return data && data[0];
@@ -261,7 +268,7 @@ function getSheet(auth, id, callback) {
     range: 'Sheet1!A1:F200'
   }, function(err, response) {
     if (err) {
-      console.log('The API returned an error: ' + err);
+      console.log('The API returned an error(' + err.code + '): ' + err);
       callback(err,null);
       return;
     }

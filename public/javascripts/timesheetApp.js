@@ -45,7 +45,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
         updateIndices(response.data.data.values, $scope);
       }else{
         //TODO ERROR POPUP
-        console.log(response);
+        console.log(response.data.data);
       }
     });
   }

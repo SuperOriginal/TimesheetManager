@@ -6,7 +6,7 @@ module.exports = function(passport){
   router.get('/google', passport.authenticate('google', {
     scope: ['profile','email','https://www.googleapis.com/auth/spreadsheets'],
     accessType: 'offline',
-    approvalPrompt: 'auto'
+    approvalPrompt: 'force'
   }));
 
   router.get('/google/callback', passport.authenticate('google', {
