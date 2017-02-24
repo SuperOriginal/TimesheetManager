@@ -18,10 +18,17 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('authController', function($scope, $window){
+.controller('authController', function($scope, $window, $http){
+
   $scope.login = function(){
     $window.location.href = '/auth/google';
   }
+
+  $http.get('/auth/authenticated').then(function(response){
+  console.log('auth responded');
+  if(response.data.authenticated)
+    $window.location.href = '/#edit';
+  });
 })
 
 .controller('editController', function($scope, $interval, $location, $http, ngDialog){

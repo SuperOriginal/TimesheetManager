@@ -15,6 +15,7 @@ router.use(isAuthenticated);
 
 //get all cells in spreadsheet
 router.get('/spreadsheet', function(req, res){
+  console.log(JSON.stringify(req.user));
   var retries = 5;
   var params = req.query;
 
@@ -24,6 +25,7 @@ router.get('/spreadsheet', function(req, res){
     return res.json({result:'error', data:error});
   }
 
+  var retried = false;
   var makeRequest = function(accessToken, refreshToken){
     retries--;
     if(!retries) {
@@ -38,6 +40,7 @@ router.get('/spreadsheet', function(req, res){
               console.log(tokenError);
               return sendError(tokenError);
             }
+            retried = true;
             makeRequest(newAccessToken, newRefreshToken);
           });
         }else{
@@ -48,19 +51,21 @@ router.get('/spreadsheet', function(req, res){
         }
       }else{
         if(!headerExists(resp.values)){
-            writeHeader(accessToken, sheetId, function(err, res){
-              if(err){
-                return res.json({
-                  result: 'error',
-                  data: 'error writing header'
-                });
-              }
-            });
+          writeHeader(accessToken, sheetId, function(err, res){
+            if(err){
+              return res.json({
+                result: 'error',
+                data: 'error writing header'
+              });
+            }
+          });
         }
-        req.login({accessToken: accessToken, refreshToken: refreshToken}, function(err){
-          if(err)
-          sendError(err);
-        });
+        if(retried){
+          req.login({accessToken: accessToken, refreshToken: refreshToken}, function(err){
+            if(err)
+            return sendError(err);
+          });
+        }
         return res.json({
           result: 'success',
           data: resp
@@ -78,7 +83,7 @@ router.post('/spreadsheet', function(req, res){
 
   var job = req.body.params.job;
   var task = req.body.params.job.task;
-  var seconds = req.body.params.hours;
+  var seconds = req.body.params.hours*100;
   var date = new Date().toLocaleDateString();
 
   if(seconds < 360){
@@ -95,15 +100,51 @@ router.post('/spreadsheet', function(req, res){
     });
   }
 
-  writeSheet(req.user.accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, task: task, hours: round(convertToHours(seconds),1)}, function(err, resp){
-    if(err){
-      return res.json({result: 'error', data: err});
-    }else{
-      return res.json({result: 'success', data: info});
-    }
-  });
+  var sendError = function(error){
+    return res.json({result:'error', data:error});
+  }
+  var retried = false;
+  var retries = 5;
+  var makeRequest = function(accessToken, refreshToken){
 
+    retries--;
+    if(!retries) {
+      // Couldn't refresh the access token.
+      return sendError('No more retries');
+    }
+
+    writeSheet(req.user.accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, task: task, hours: round(convertToHours(seconds),1)}
+    , function(err, resp){
+
+      if(err){
+        if(err.code === 401){
+          refresh.requestNewAccessToken('google', refreshToken
+          , function(tokenError, newAccessToken, newRefreshToken) {
+            if(tokenError || !newAccessToken){
+              console.log(tokenError);
+              return sendError(tokenError);
+            }
+            retried = true;
+            makeRequest(newAccessToken, newRefreshToken);
+          });
+        }else{
+          return res.json({result: 'error', data: err});
+        }
+      }else{
+        if(retried){
+          req.login({accessToken: accessToken, refreshToken: refreshToken}, function(err){
+            if(err)
+            return sendError(err);
+          });
+        }
+        return res.json({result: 'success', data: info});
+    }
+
+  });
+}
+makeRequest(req.user.accessToken, req.user.refreshToken);
 });
+
 
 function headerExists(data){
   return data && data[0];
