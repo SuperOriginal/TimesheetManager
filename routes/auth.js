@@ -3,7 +3,6 @@ var router = express.Router();
 
 module.exports = function(passport){
   router.get('/authenticated', function(req,res){
-    console.log('got auth req');
     res.json({authenticated: req.isAuthenticated()});
   });
   //log in

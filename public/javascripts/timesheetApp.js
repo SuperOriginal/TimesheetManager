@@ -18,16 +18,14 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('authController', function($scope, $window, $http){
-
+.controller('authController', function($scope, $window, $http, $location){
   $scope.login = function(){
     $window.location.href = '/auth/google';
   }
 
   $http.get('/auth/authenticated').then(function(response){
-  console.log('auth responded');
   if(response.data.authenticated)
-    $window.location.href = '/#edit';
+    $location.path('edit');
   });
 })
 
@@ -167,23 +165,23 @@ function updateIndices(data, scope){
 
   if(data.length > 0){
     //Start at second row since first is header
-    for(var rowIndex = 1; rowIndex < data.length; rowIndex++){
+    for(var rowIndex = 1; rowIndex <= data.length; rowIndex++){
       var row = data[rowIndex];
         if(rowIndex > firstEntryRow){
           //if we are in the entry section and we find an empty row, it is the last entry
-          if((!row || row.length === 0) || (rowIndex === data.length-1)){
+          if((!row || row.length === 0) || (rowIndex === data.length)){
             //now we'll update to the new index
-            scope.indices.lastEntryCell = {row: rowIndex+1 , col: dateCol};
+            scope.indices.lastEntryCell = {row: rowIndex, col: dateCol};
             break;
           }
           var obj = {
-            date: data[rowIndex][dateCol],
+            date: row[dateCol],
             job: {
-              number: data[rowIndex][dateCol+1],
-              name: data[rowIndex][dateCol+2]
+              number: row[dateCol+1],
+              name: row[dateCol+2]
             },
-            task: data[rowIndex][dateCol+3],
-            hours: data[rowIndex][dateCol+4]
+            desc: row[dateCol+3],
+            hours: row[dateCol+4]
           };
 
           scope.entries.push(obj);

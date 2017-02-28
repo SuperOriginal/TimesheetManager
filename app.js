@@ -31,7 +31,11 @@ app.use('/modules', express.static(__dirname + '/node_modules/'));
 var sessionOpts = {
   secret: creds.sessionSecret,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    //one week
+    maxAge: 604800000
+  }
 }
 
 app.use(session(sessionOpts));

@@ -15,7 +15,6 @@ router.use(isAuthenticated);
 
 //get all cells in spreadsheet
 router.get('/spreadsheet', function(req, res){
-  console.log(JSON.stringify(req.user));
   var retries = 5;
   var params = req.query;
 
@@ -113,7 +112,7 @@ router.post('/spreadsheet', function(req, res){
       return sendError('No more retries');
     }
 
-    writeSheet(req.user.accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, task: task, hours: round(convertToHours(seconds),1)}
+    writeSheet(accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, desc: task, hours: round(convertToHours(seconds),1)}
     , function(err, resp){
 
       if(err){
@@ -259,7 +258,7 @@ function writeSheet(auth, id, indices, data, callback){
     updateCells: {
       start: {
         sheetId: 0,
-        rowIndex: row,
+        rowIndex: row-1,
         columnIndex: col
       },
       rows: [{
@@ -285,6 +284,12 @@ function writeSheet(auth, id, indices, data, callback){
         }]
       }],
       fields: 'userEnteredValue,userEnteredFormat(horizontalAlignment)'
+    }
+  });
+
+  requests.push({
+    autoResizeDimensions: {
+      //TODO RESIZE COLUMNS
     }
   });
 
