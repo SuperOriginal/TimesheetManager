@@ -289,7 +289,12 @@ function writeSheet(auth, id, indices, data, callback){
 
   requests.push({
     autoResizeDimensions: {
-      //TODO RESIZE COLUMNS
+      dimensions:{
+        sheetId: 0,
+        dimension: 'COLUMNS',
+        startIndex: 0,
+        endIndex: 5
+      }
     }
   });
 

@@ -1,4 +1,4 @@
-var timesheetApp = angular.module('timesheetApp', ['ui.router','ngDialog']);
+var timesheetApp = angular.module('timesheetApp', ['ui.router','ngDialog', 'ngCookies']);
 
 timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvider) {
 
@@ -29,7 +29,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('editController', function($scope, $interval, $location, $http, ngDialog){
+.controller('editController', function($scope, $interval, $location, $http, $cookies, ngDialog){
   window.sco = $scope;
   window.ngd = ngDialog;
   $scope.accessToken = $location.search()['token'];
@@ -45,8 +45,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       sheet_id: $scope.spreadsheet.id
     }}).then(function(response){
       if(response.data.result === 'success'){
-        Cookies.set('sheeturl', $scope.spreadsheet.id, {expires: 7});
-        $scope.sheet_data = response;
+        $cookies.put('sheeturl', $scope.spreadsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
         updateIndices(response.data.data.values, $scope);
       }else{
         //TODO ERROR POPUP
@@ -86,7 +85,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     }}).then(function(response){
       if(response.data.result === 'success'){
         $scope.jobdata = response;
-        Cookies.set('joburl', $scope.jobsheet.id, {expires: 7});
+        $cookies.put('joburl', $scope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
         readJobs(response.data.data.values, $scope);
       }else{
         //TODO ERROR POPUP
@@ -119,13 +118,13 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 
   var init = function () {
-    var jobsurl = Cookies.get('joburl');
+    var jobsurl = $cookies.get('joburl');
     if(jobsurl){
       $scope.jobsheet.id = jobsurl;
       $scope.parseJobs();
     }
 
-    var sheeturl = Cookies.get('sheeturl');
+    var sheeturl = $cookies.get('sheeturl');
     if(sheeturl){
       $scope.spreadsheet.id = sheeturl;
       $scope.submitUrl();
@@ -143,14 +142,11 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   };
 })
 
-.run(function($rootScope, $http){
-  $rootScope.authenticated = false;
-  $rootScope.currentUser = '';
-
+.run(function($rootScope, $http, $location){
   $rootScope.logout = function(){
-    $http.get('/auth/logout');
-    $rootScope.authenticated = false;
-    $rootScope.current_user = '';
+    $http.get('/auth/logout').then(function(respoonse){
+      $location.path('/');
+    });
   };
 });
 
@@ -183,8 +179,7 @@ function updateIndices(data, scope){
             desc: row[dateCol+3],
             hours: row[dateCol+4]
           };
-
-          scope.entries.push(obj);
+          scope.entries[rowIndex-1] = obj;
       }
     }
   }
