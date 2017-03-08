@@ -11,6 +11,11 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     templateUrl: 'signin.html',
     controller: 'authController as authCtrl'
   });
+  $stateProvider.state('settings', {
+    url: '/settings',
+    templateUrl: 'settings.html',
+    controller: 'editController as editCtrl'
+  });
   $stateProvider.state('edit',{
     url: '/edit',
     templateUrl: 'edit.html',
@@ -24,12 +29,17 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   }
 
   $http.get('/auth/authenticated').then(function(response){
-  if(response.data.authenticated)
+    if(response.data.authenticated)
     $location.path('edit');
   });
 })
 
 .controller('editController', function($scope, $interval, $location, $http, $cookies, ngDialog){
+  $http.get('/auth/authenticated').then(function(response){
+    if(!response.data.authenticated)
+    $location.path('/');
+  });
+
   window.sco = $scope;
   window.ngd = ngDialog;
   $scope.accessToken = $location.search()['token'];
@@ -39,6 +49,29 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $scope.jobsheet = {};
 
   $scope.timer = {counter: 0, clock: undefined, currentTask: undefined};
+
+  $scope.edit = function(){
+    $location.url('/edit');
+  }
+
+  $scope.settings = function(){
+    $location.url('/settings');
+  }
+
+  $scope.parseJobs = function(){
+    $http.get('/api/spreadsheet', {params: {
+      sheet_id: $scope.jobsheet.id
+    }}).then(function(response){
+      if(response.data.result === 'success'){
+        $scope.jobdata = response;
+        $cookies.put('joburl', $scope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
+        readJobs(response.data.data.values, $scope);
+      }else{
+        //TODO ERROR POPUP
+        console.log(response.data.data);
+      }
+    });
+  }
 
   $scope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
@@ -53,7 +86,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       }
     });
   }
-
 
   $scope.popup = function(){
     ngDialog.open({
@@ -77,21 +109,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       }
     });
     $scope.indices.lastEntryCell.row++;
-  }
-
-  $scope.parseJobs = function(){
-    $http.get('/api/spreadsheet', {params: {
-      sheet_id: $scope.jobsheet.id
-    }}).then(function(response){
-      if(response.data.result === 'success'){
-        $scope.jobdata = response;
-        $cookies.put('joburl', $scope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
-        readJobs(response.data.data.values, $scope);
-      }else{
-        //TODO ERROR POPUP
-        console.log(response.data.data);
-      }
-    });
   }
 
   $scope.timer.beginTask = function(currentTask){
@@ -142,9 +159,12 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   };
 })
 
-.run(function($rootScope, $http, $location){
+.run(function($rootScope, $http, $location, $cookies){
   $rootScope.logout = function(){
-    $http.get('/auth/logout').then(function(respoonse){
+    //TODO CONFIRM POPUP
+    $http.get('/auth/logout').then(function(response){
+      $cookies.remove('joburl');
+      $cookies.remove('sheeturl');
       $location.path('/');
     });
   };
@@ -163,23 +183,23 @@ function updateIndices(data, scope){
     //Start at second row since first is header
     for(var rowIndex = 1; rowIndex <= data.length; rowIndex++){
       var row = data[rowIndex];
-        if(rowIndex > firstEntryRow){
-          //if we are in the entry section and we find an empty row, it is the last entry
-          if((!row || row.length === 0) || (rowIndex === data.length)){
-            //now we'll update to the new index
-            scope.indices.lastEntryCell = {row: rowIndex, col: dateCol};
-            break;
-          }
-          var obj = {
-            date: row[dateCol],
-            job: {
-              number: row[dateCol+1],
-              name: row[dateCol+2]
-            },
-            desc: row[dateCol+3],
-            hours: row[dateCol+4]
-          };
-          scope.entries[rowIndex-1] = obj;
+      if(rowIndex > firstEntryRow){
+        //if we are in the entry section and we find an empty row, it is the last entry
+        if((!row || row.length === 0) || (rowIndex === data.length)){
+          //now we'll update to the new index
+          scope.indices.lastEntryCell = {row: rowIndex, col: dateCol};
+          break;
+        }
+        var obj = {
+          date: row[dateCol],
+          job: {
+            number: row[dateCol+1],
+            name: row[dateCol+2]
+          },
+          desc: row[dateCol+3],
+          hours: row[dateCol+4]
+        };
+        scope.entries[rowIndex-1] = obj;
       }
     }
   }

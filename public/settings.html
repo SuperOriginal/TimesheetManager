@@ -1,0 +1,18 @@
+<h3>Enter your jobs url:</h3>
+
+<form ng-submit='parseJobs()'>
+  <input ng-model='jobsheet.id' type="text" name="url"><br>
+  <input type="submit" value="Submit">
+</form>
+
+<br>
+
+<h3>Enter your sheet url:</h3>
+
+<form ng-submit='submitUrl()'>
+  <input ng-model='spreadsheet.id' type="text" name="url"><br>
+  <input type="submit" value="Submit">
+</form>
+
+<br>
+<button type="button" name="button" ng-click="edit()">Home</button>
