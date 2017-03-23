@@ -66,9 +66,10 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
         $scope.jobdata = response;
         $cookies.put('joburl', $scope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
         readJobs(response.data.data.values, $scope);
+
+        //success('Job spreadsheet URL successfully set');
       }else{
-        //TODO ERROR POPUP
-        console.log(response.data.data);
+        err(response.data.data);
       }
     });
   }
@@ -80,18 +81,23 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       if(response.data.result === 'success'){
         $cookies.put('sheeturl', $scope.spreadsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
         updateIndices(response.data.data.values, $scope);
+
+        //success('Timesheet URL successfully set');
       }else{
-        //TODO ERROR POPUP
-        console.log(response.data.data);
+        err(response.data.data);
       }
     });
   }
 
   $scope.popup = function(){
-    ngDialog.open({
-      template: '/popup.html',
-      scope: $scope
-    });
+    if($scope.jobs){
+      ngDialog.open({
+        template: '/popup.html',
+        scope: $scope
+      });
+    }else{
+      err('Jobs URL not set');
+    }
   }
 
   $scope.addEntry = function(){
@@ -104,8 +110,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       if(response.data.result === 'success'){
         $scope.entries.push(response.data.data);
       }else{
-        //TODO ERROR POPUP
-        console.log(response.data.data);
+        err(response.data.data);
       }
     });
     $scope.indices.lastEntryCell.row++;
@@ -227,4 +232,20 @@ function readJobs(data, scope){
   }
 
   scope.jobs = jobs;
+}
+
+function err(msg){
+  swal(
+    'Error',
+    msg,
+    'error'
+  );
+}
+
+function success(msg){
+  swal(
+    'Success',
+    msg,
+    'success'
+  )
 }

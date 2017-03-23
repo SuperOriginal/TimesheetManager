@@ -24,38 +24,39 @@ router.get('/spreadsheet', function(req, res){
     return res.json({result:'error', data:error});
   }
 
+  if(!sheetId){
+    return sendError('URL not specified');
+  }
+
+  if(!req.isAuthenticated()){
+    return sendError('Not authenticated to make this action');
+  }
+
   var retried = false;
   var makeRequest = function(accessToken, refreshToken){
     retries--;
     if(!retries) {
       // Couldn't refresh the access token.
-      return sendError('No more retries');
+      return sendError('Failed to refresh access token');
     }
     getSheet(accessToken, sheetId, function(err, resp){
       if(err){
         if(err.code === 401){
           refresh.requestNewAccessToken('google', refreshToken, function(tokenError, newAccessToken, newRefreshToken) {
             if(tokenError || !newAccessToken){
-              console.log(tokenError);
               return sendError(tokenError);
             }
             retried = true;
             makeRequest(newAccessToken, newRefreshToken);
           });
         }else{
-          return res.json({
-            result: 'error',
-            data: 'error getting sheet data'
-          });
+          return sendError(err.code + ': ' + err.message);
         }
       }else{
         if(!headerExists(resp.values)){
           writeHeader(accessToken, sheetId, function(err, res){
             if(err){
-              return res.json({
-                result: 'error',
-                data: 'error writing header'
-              });
+              return sendError('Failed to write header');
             }
           });
         }
@@ -85,23 +86,22 @@ router.post('/spreadsheet', function(req, res){
   var seconds = req.body.params.hours*100;
   var date = new Date().toLocaleDateString();
 
-  if(seconds < 360){
-    return res.json({
-      result: 'error',
-      data: 'not enough time'
-    });
-  }
-
-  if(!job || !task){
-    return res.json({
-      result: 'error',
-      data: 'missing variables'
-    });
-  }
-
   var sendError = function(error){
     return res.json({result:'error', data:error});
   }
+
+  if(!sheetId){
+    return sendError('URL not specified');
+  }
+
+  if(seconds < 360){
+    return sendError('Work time not long enough');
+  }
+
+  if(!job || !task || !seconds){
+    return sendError('Required variables are missing');
+  }
+
   var retried = false;
   var retries = 5;
   var makeRequest = function(accessToken, refreshToken){
@@ -112,22 +112,29 @@ router.post('/spreadsheet', function(req, res){
       return sendError('No more retries');
     }
 
-    writeSheet(accessToken, sheetId, indices, info = {date: date, job: {name: job.job.split(':')[1].substring(1), number: job.job.split(':')[0].substring(1) }, desc: task, hours: round(convertToHours(seconds),1)}
-    , function(err, resp){
+    var info = {
+      date: date,
+      job: {
+        name: job.job.split(':')[1].substring(1),
+        number: job.job.split(':')[0].substring(1),
+      },
+      desc: task,
+      hours: round(convertToHours(seconds),1)
+    }
 
+    writeSheet(accessToken, sheetId, indices, info, function(err, resp){
       if(err){
         if(err.code === 401){
           refresh.requestNewAccessToken('google', refreshToken
           , function(tokenError, newAccessToken, newRefreshToken) {
             if(tokenError || !newAccessToken){
-              console.log(tokenError);
               return sendError(tokenError);
             }
             retried = true;
             makeRequest(newAccessToken, newRefreshToken);
           });
         }else{
-          return res.json({result: 'error', data: err});
+          return sendError(err.code + ': ' + err.message);
         }
       }else{
         if(retried){
@@ -319,7 +326,6 @@ function getSheet(auth, id, callback) {
     range: 'Sheet1!A1:F200'
   }, function(err, response) {
     if (err) {
-      console.log('The API returned an error(' + err.code + '): ' + err);
       callback(err,null);
       return;
     }
