@@ -21,6 +21,9 @@
   <div ng-show='timer.currentTask'>
     <h2 >Currently working on {{timer.currentTask.job}} - {{timer.currentTask.task}} for {{timer.counter | secondsToDateTime | date:'HH:mm:ss'}}</h2>
     <button type="button" name="button" ng-click='timer.endTask()'>Stop</button>
+    <button ng-hide='timer.paused' type="button" name="button" ng-click='timer.pauseTask()'>Pause</button>
+    <button ng-show='timer.paused' type="button" name="button" ng-click='timer.resumeTask()'>Resume</button>
+    <button type="button" name="button" ng-click='timer.cancelTask()'>Cancel</button>
   </div>
 
 

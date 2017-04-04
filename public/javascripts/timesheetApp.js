@@ -34,7 +34,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('editController', function($scope, $interval, $location, $http, $cookies, ngDialog){
+.controller('editController', function($scope, $rootScope, $interval, $location, $http, $cookies, ngDialog){
   $http.get('/auth/authenticated').then(function(response){
     if(!response.data.authenticated)
     $location.path('/');
@@ -48,7 +48,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $scope.spreadsheet = {};
   $scope.jobsheet = {};
 
-  $scope.timer = {counter: 0, clock: undefined, currentTask: undefined};
+  $scope.success = success;
 
   $scope.edit = function(){
     $location.url('/edit');
@@ -66,8 +66,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
         $scope.jobdata = response;
         $cookies.put('joburl', $scope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
         readJobs(response.data.data.values, $scope);
-
-        //success('Job spreadsheet URL successfully set');
       }else{
         err(response.data.data);
       }
@@ -81,8 +79,6 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       if(response.data.result === 'success'){
         $cookies.put('sheeturl', $scope.spreadsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
         updateIndices(response.data.data.values, $scope);
-
-        //success('Timesheet URL successfully set');
       }else{
         err(response.data.data);
       }
@@ -104,8 +100,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     $http.post('/api/spreadsheet', {params: {
       sheet_id: $scope.spreadsheet.id,
       indices: $scope.indices,
-      job: $scope.timer.currentTask,
-      hours: $scope.timer.counter
+      job: $rootScope.timer.currentTask,
+      hours: $rootScope.timer.counter
     }}).then(function(response){
       if(response.data.result === 'success'){
         $scope.entries.push(response.data.data);
@@ -116,27 +112,36 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     $scope.indices.lastEntryCell.row++;
   }
 
-  $scope.timer.beginTask = function(currentTask){
-    $scope.timer.currentTask = currentTask;
-    $scope.timer.clock = $interval(function(){
-      $scope.timer.counter++;
-    },1000);
+  $rootScope.timer.beginTask = function(currentTask){
+    $rootScope.timer.currentTask = currentTask;
+    $rootScope.timer.resumeTask();
     ngDialog.closeAll();
   }
 
-  $scope.timer.cancelTask = function(){
-    $scope.timer.pauseTask();
-    $scope.timer.counter = 0;
-    $scope.timer.currentTask = undefined;
+  $rootScope.timer.cancelTask = function(){
+    $rootScope.timer.pauseTask();
+    $rootScope.timer.counter = 0;
+    $rootScope.timer.currentTask = undefined;
   }
 
-  $scope.timer.pauseTask = function(){
-    $interval.cancel($scope.timer.clock);
+  $rootScope.timer.pauseTask = function(){
+    $rootScope.timer.paused = true;
+    $interval.cancel($rootScope.timer.clock);
   }
 
-  $scope.timer.endTask = function(){
+  $rootScope.timer.resumeTask = function(){
+    $rootScope.timer.paused = false;
+    $rootScope.timer.clock = $interval(function(){
+      $rootScope.timer.counter++;
+      if($rootScope.remind.interval > 10 && $rootScope.timer.counter % $rootScope.remind.interval === 0){
+        //TODO REMIND USER
+      }
+    },1000);
+  }
+
+  $rootScope.timer.endTask = function(){
     $scope.addEntry();
-    $scope.timer.cancelTask();
+    $rootScope.timer.cancelTask();
   }
 
   var init = function () {
@@ -165,15 +170,23 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 })
 
 .run(function($rootScope, $http, $location, $cookies){
+  $rootScope.timer = {counter: 0, clock: undefined, currentTask: undefined};
+  $rootScope.remind = {interval: -1}
   $rootScope.logout = function(){
-    //TODO CONFIRM POPUP
-    $http.get('/auth/logout').then(function(response){
-      $cookies.remove('joburl');
-      $cookies.remove('sheeturl');
-      $location.path('/');
-    });
-  };
-});
+    swal({
+      title: 'Logout?',
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes',
+      reverseButtons: true
+    }).then(function () {
+      $http.get('/auth/logout').then(function(response){
+        $cookies.remove('joburl');
+        $cookies.remove('sheeturl');
+        $location.path('/');
+      });
+  });
+}});
 
 //read cells in the time sheet to update index variables for reference
 function updateIndices(data, scope){
