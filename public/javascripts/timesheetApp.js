@@ -134,7 +134,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     $rootScope.timer.clock = $interval(function(){
       $rootScope.timer.counter++;
       if($rootScope.remind.interval > 10 && $rootScope.timer.counter % $rootScope.remind.interval === 0){
-        //TODO REMIND USER
+        remind($rootScope, ngDialog);
       }
     },1000);
   }
@@ -142,6 +142,14 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $rootScope.timer.endTask = function(){
     $scope.addEntry();
     $rootScope.timer.cancelTask();
+  }
+
+  var remind = function(scope, dialog){
+    dialog.closeAll();
+    ngDialog.open({
+      template: '/reminder.html',
+      scope: scope
+    });
   }
 
   var init = function () {
