@@ -17,7 +17,11 @@
 <br>
 
 <h3>Remind Interval (seconds):</h3>
-<input ng-model='remind.interval' type="text" name="url"><br>
+<form ng-submit='updateReminder();success("Successfully set remind interval")'>
+  <input ng-model='remind.interval' type="text" name="url"><br>
+  <input type="submit" value="Submit">
+</form>
+
 
 <br>
 <button type="button" name="button" ng-click="edit()">Home</button>

@@ -23,7 +23,7 @@
     <button type="button" name="button" ng-click='timer.endTask()'>Stop</button>
     <button ng-hide='timer.paused' type="button" name="button" ng-click='timer.pauseTask()'>Pause</button>
     <button ng-show='timer.paused' type="button" name="button" ng-click='timer.resumeTask()'>Resume</button>
-    <button type="button" name="button" ng-click='timer.cancelTask()'>Cancel</button>
+    <button type="button" name="button" ng-click='timer.cancelTask(true)'>Cancel</button>
   </div>
 
 

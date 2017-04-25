@@ -48,6 +48,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   $scope.spreadsheet = {};
   $scope.jobsheet = {};
 
+  var openReminder = undefined;
+
   $scope.success = success;
 
   $scope.edit = function(){
@@ -56,6 +58,10 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
   $scope.settings = function(){
     $location.url('/settings');
+  }
+
+  $scope.updateReminder = function(){
+    $cookies.put('reminder', $scope.remind.interval, {expires: new Date(Date.now() + 1000*60*60*24*7)});
   }
 
   $scope.parseJobs = function(){
@@ -118,10 +124,26 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     ngDialog.closeAll();
   }
 
-  $rootScope.timer.cancelTask = function(){
-    $rootScope.timer.pauseTask();
-    $rootScope.timer.counter = 0;
-    $rootScope.timer.currentTask = undefined;
+  $rootScope.timer.cancelTask = function(popup){
+    if(popup){
+      swal({
+        title: 'Are you sure?',
+        text: 'Time currently logged will be lost',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'I\'m Sure',
+        reverseButtons: true
+      }).then(function () {
+        $rootScope.timer.pauseTask();
+        $rootScope.timer.counter = 0;
+        $rootScope.timer.currentTask = undefined;
+        $scope.$apply();
+      });
+    }else{
+      $rootScope.timer.pauseTask();
+      $rootScope.timer.counter = 0;
+      $rootScope.timer.currentTask = undefined;
+    }
   }
 
   $rootScope.timer.pauseTask = function(){
@@ -141,15 +163,20 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
   $rootScope.timer.endTask = function(){
     $scope.addEntry();
-    $rootScope.timer.cancelTask();
+    $rootScope.timer.cancelTask(false);
+    ngDialog.closeAll();
   }
 
   var remind = function(scope, dialog){
-    dialog.closeAll();
-    ngDialog.open({
-      template: '/reminder.html',
-      scope: scope
-    });
+    if(!openReminder){
+      openReminder = ngDialog.openConfirm({
+        template: '/reminder.html',
+        scope: scope,
+        preCloseCallback: function(val){
+          openReminder = undefined;
+        }
+      });
+    }
   }
 
   var init = function () {
@@ -164,6 +191,9 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       $scope.spreadsheet.id = sheeturl;
       $scope.submitUrl();
     }
+
+    var remindInterval = $cookies.get('reminder');
+    if(remindInterval) $scope.remind.interval = remindInterval;
   };
   init();
 
@@ -193,80 +223,80 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
         $cookies.remove('sheeturl');
         $location.path('/');
       });
-  });
-}});
+    });
+  }});
 
-//read cells in the time sheet to update index variables for reference
-function updateIndices(data, scope){
-  //return if empty
-  if(!data) return;
+  //read cells in the time sheet to update index variables for reference
+  function updateIndices(data, scope){
+    //return if empty
+    if(!data) return;
 
-  var dateCol = 0,
-  updated = false,
-  firstEntryRow = 0;
+    var dateCol = 0,
+    updated = false,
+    firstEntryRow = 0;
 
-  if(data.length > 0){
-    //Start at second row since first is header
-    for(var rowIndex = 1; rowIndex <= data.length; rowIndex++){
+    if(data.length > 0){
+      //Start at second row since first is header
+      for(var rowIndex = 1; rowIndex <= data.length; rowIndex++){
+        var row = data[rowIndex];
+        if(rowIndex > firstEntryRow){
+          //if we are in the entry section and we find an empty row, it is the last entry
+          if((!row || row.length === 0) || (rowIndex === data.length)){
+            //now we'll update to the new index
+            scope.indices.lastEntryCell = {row: rowIndex, col: dateCol};
+            break;
+          }
+          var obj = {
+            date: row[dateCol],
+            job: {
+              number: row[dateCol+1],
+              name: row[dateCol+2]
+            },
+            desc: row[dateCol+3],
+            hours: row[dateCol+4]
+          };
+          scope.entries[rowIndex-1] = obj;
+        }
+      }
+    }
+  }
+
+  //parse the job & task spreadsheet
+  function readJobs(data, scope){
+    if(!data) return;
+
+    var jobs = {};
+
+    for(var rowIndex = 0; rowIndex < data.length; rowIndex++){
       var row = data[rowIndex];
-      if(rowIndex > firstEntryRow){
-        //if we are in the entry section and we find an empty row, it is the last entry
-        if((!row || row.length === 0) || (rowIndex === data.length)){
-          //now we'll update to the new index
-          scope.indices.lastEntryCell = {row: rowIndex, col: dateCol};
-          break;
-        }
-        var obj = {
-          date: row[dateCol],
-          job: {
-            number: row[dateCol+1],
-            name: row[dateCol+2]
-          },
-          desc: row[dateCol+3],
-          hours: row[dateCol+4]
-        };
-        scope.entries[rowIndex-1] = obj;
-      }
-    }
-  }
-}
-
-//parse the job & task spreadsheet
-function readJobs(data, scope){
-  if(!data) return;
-
-  var jobs = {};
-
-  for(var rowIndex = 0; rowIndex < data.length; rowIndex++){
-    var row = data[rowIndex];
-    for(var colIndex = 0; colIndex <= row.length; colIndex++){
-      var col = row[colIndex];
-      if(col){
-        if(rowIndex === 0){
-          var split = col.split(':');
-          jobs[split[0]] = {number: split[0], desc: split[1].toUpperCase(), tasks:[]};
-        }else{
-          jobs[data[0][colIndex].split(':')[0]].tasks.push(col);
+      for(var colIndex = 0; colIndex <= row.length; colIndex++){
+        var col = row[colIndex];
+        if(col){
+          if(rowIndex === 0){
+            var split = col.split(':');
+            jobs[split[0]] = {number: split[0], desc: split[1].toUpperCase(), tasks:[]};
+          }else{
+            jobs[data[0][colIndex].split(':')[0]].tasks.push(col);
+          }
         }
       }
     }
+
+    scope.jobs = jobs;
   }
 
-  scope.jobs = jobs;
-}
+  function err(msg){
+    swal(
+      'Error',
+      msg,
+      'error'
+    );
+  }
 
-function err(msg){
-  swal(
-    'Error',
-    msg,
-    'error'
-  );
-}
-
-function success(msg){
-  swal(
-    'Success',
-    msg,
-    'success'
-  )
-}
+  function success(msg){
+    swal(
+      'Success',
+      msg,
+      'success'
+    )
+  }
