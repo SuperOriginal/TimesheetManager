@@ -1,27 +1,29 @@
-<h3>Enter your jobs url:</h3>
+<div class="container-fluid">
+  <h3>Enter your jobs url:</h3>
 
-<form ng-submit='parseJobs();success("Successfully set job URL")'>
-  <input ng-model='jobsheet.id' type="text" name="url"><br>
-  <input type="submit" value="Submit">
-</form>
+  <form ng-submit='parseJobs();success("Successfully set job URL")'>
+    <input ng-model='jobsheet.id' type="text" name="url"><br>
+    <input style='margin-top:20px' class='btn btn-primary' type="submit" value="Submit">
+  </form>
 
-<br>
+  <br>
 
-<h3>Enter your sheet url:</h3>
+  <h3>Enter your sheet url:</h3>
 
-<form ng-submit='submitUrl();success("Successfully set timesheet URL")'>
-  <input ng-model='spreadsheet.id' type="text" name="url"><br>
-  <input type="submit" value="Submit">
-</form>
+  <form ng-submit='submitUrl();success("Successfully set timesheet URL")'>
+    <input ng-model='spreadsheet.id' type="text" name="url"><br>
+    <input style='margin-top:20px' class='btn btn-primary' type="submit" value="Submit">
+  </form>
 
-<br>
+  <br>
 
-<h3>Remind Interval (seconds):</h3>
-<form ng-submit='updateReminder();success("Successfully set remind interval")'>
-  <input ng-model='remind.interval' type="text" name="url"><br>
-  <input type="submit" value="Submit">
-</form>
+  <h3>Remind Interval (seconds -1: no reminder):</h3>
+  <form ng-submit='updateReminder();success("Successfully set remind interval")'>
+    <input ng-model='remind.interval' type="text" name="url"><br>
+    <input style='margin-top:20px' class='btn btn-primary' type="submit" value="Submit">
+  </form>
 
 
-<br>
-<button type="button" name="button" ng-click="edit()">Home</button>
+  <br>
+  <button class='btn btn-success'style='margin-top:30px' type="button" name="button" ng-click="edit()">Home</button>
+</div>

@@ -12,9 +12,10 @@
   </p>
   <br>
 
-  <button class="btn btn-primary" type="button" name="button" ng-click='popup()'>Popup</button>
-  <button class="btn" type="button" name="button" ng-click='logout()'>Logout</button>
-  <button class="btn btn-success" type="button" name="button" ng-click="settings()">Settings</button>
+  <button ng-hide='timer.currentTask' class="btn btn-primary" type="button" name="button" ng-click='popup()'>Start</button>
+  <button class="btn btn-success" style='margin-left:30px' type="button" name="button" ng-click="settings()">Settings</button>
+  <button class="btn btn-danger pull-right" type="button" name="button" ng-click='logout()'>Logout</button>
+
 
   <br>
 
@@ -26,8 +27,8 @@
     <button type="button" name="button" ng-click='timer.cancelTask(true)'>Cancel</button>
   </div>
 
-
-  <table ng-show='entries' class="table table-striped">
+  <p style='padding-top:50px' ng-hide='spreadsheet.id && jobsheet.id'>Configure your Google Sheets URLs in the settings page to get started.</p>
+  <table ng-show='entries && spreadsheet.id && jobsheet.id' class="table table-striped">
     <thead>
       <tr>
         <th>Date</th>

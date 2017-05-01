@@ -1,13 +1,16 @@
+html, #main, #main main{
+  height: 100%;
+  width: auto;
+}
+
 #intro {
+  height: 100%;
+  width: auto;
   background: url('introbg.jpg') no-repeat center center fixed;
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
   background-size: cover;
-}
-
-body {
-  height: 100%;
 }
 
 #intro h1{
@@ -16,7 +19,30 @@ body {
   font-weight: 700;
   text-align: center;
   color: white;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  text-shadow: 0 1px 10px rgba(0,0,0,0.6);
+
+  -webkit-animation-duration: 1.5s;
+  -moz-animation-duration: 1.5s;
+  -o-animation-duration: 1.5s;
+  animation-duration: 1.5s;
+}
+
+#intro h2{
+  font-size: 35px;
+  font-weight: 500;
+  text-align: center;
+  color: white;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.6);
+
+  -webkit-animation-delay: 1s;
+  -moz-animation-delay: 1s;
+  -o-animation-delay: 1s;
+  animation-delay: 1s;
+
+  -webkit-animation-duration: 1.5s;
+  -moz-animation-duration: 1.5s;
+  -o-animation-duration: 1.5s;
+  animation-duration: 1.5s;
 }
 
 img {
@@ -26,4 +52,25 @@ img {
   margin-right: auto;
   max-width: 300px;
   height: auto
+
+  -webkit-animation-delay: 2s;
+  -moz-animation-delay: 2s;
+  -o-animation-delay: 2s;
+  animation-delay: 2s;
+}
+
+.btn, img {
+  transform: scale(1);
+  transition-property: all;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+  transition-delay: initial;
+}
+
+.btn:hover, img:hover {
+  transform: scale(1.1);
+  transition-property: all;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+  transition-delay: initial;
 }

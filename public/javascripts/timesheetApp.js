@@ -221,6 +221,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
       $http.get('/auth/logout').then(function(response){
         $cookies.remove('joburl');
         $cookies.remove('sheeturl');
+        $cookies.remove('reminder');
         $location.path('/');
       });
     });
