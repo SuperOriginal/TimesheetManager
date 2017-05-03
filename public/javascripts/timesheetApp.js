@@ -197,7 +197,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     }
 
     var remindInterval = $cookies.get('reminder');
-    if(remindInterval) $scope.remind.interval = remindInterval;
+    if(remindInterval) $rootScope.remind.interval = remindInterval;
   };
   init();
 
