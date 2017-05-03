@@ -23,8 +23,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('authController', function($scope, $window, $http, $location){
-  $scope.login = function(){
+.controller('authController', function($rootScope, $window, $http, $location){
+  $rootScope.login = function(){
     $window.location.href = '/auth/google';
   }
 
@@ -34,88 +34,91 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('editController', function($scope, $rootScope, $interval, $location, $http, $cookies, ngDialog){
+.controller('editController', function($rootScope, $rootScope, $interval, $location, $http, $cookies, ngDialog){
   $http.get('/auth/authenticated').then(function(response){
     if(!response.data.authenticated)
     $location.path('/');
+    return;
   });
 
-  window.sco = $scope;
+  $rootScope.requestPermission();
+
+  window.sco = $rootScope;
   window.ngd = ngDialog;
-  $scope.accessToken = $location.search()['token'];
-  $scope.indices = {lastEntryCell:{row:1, col:0}};
-  $scope.entries = [];
-  $scope.spreadsheet = {};
-  $scope.jobsheet = {};
+  $rootScope.accessToken = $location.search()['token'];
+  $rootScope.indices = {lastEntryCell:{row:1, col:0}};
+  $rootScope.entries = [];
+  $rootScope.spreadsheet = {};
+  $rootScope.jobsheet = {};
 
   var openReminder = undefined;
 
-  $scope.success = success;
+  $rootScope.success = success;
 
-  $scope.edit = function(){
+  $rootScope.edit = function(){
     $location.url('/edit');
   }
 
-  $scope.settings = function(){
+  $rootScope.settings = function(){
     $location.url('/settings');
   }
 
-  $scope.updateReminder = function(){
-    $cookies.put('reminder', $scope.remind.interval, {expires: new Date(Date.now() + 1000*60*60*24*7)});
+  $rootScope.updateReminder = function(){
+    $cookies.put('reminder', $rootScope.remind.interval, {expires: new Date(Date.now() + 1000*60*60*24*7)});
   }
 
-  $scope.parseJobs = function(){
+  $rootScope.parseJobs = function(){
     $http.get('/api/spreadsheet', {params: {
-      sheet_id: $scope.jobsheet.id
+      sheet_id: $rootScope.jobsheet.id
     }}).then(function(response){
       if(response.data.result === 'success'){
-        $scope.jobdata = response;
-        $cookies.put('joburl', $scope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
-        readJobs(response.data.data.values, $scope);
+        $rootScope.jobdata = response;
+        $cookies.put('joburl', $rootScope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
+        readJobs(response.data.data.values, $rootScope);
       }else{
         err(response.data.data);
       }
     });
   }
 
-  $scope.submitUrl = function(){
+  $rootScope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
-      sheet_id: $scope.spreadsheet.id
+      sheet_id: $rootScope.spreadsheet.id
     }}).then(function(response){
       if(response.data.result === 'success'){
-        $cookies.put('sheeturl', $scope.spreadsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
-        updateIndices(response.data.data.values, $scope);
+        $cookies.put('sheeturl', $rootScope.spreadsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
+        updateIndices(response.data.data.values, $rootScope);
       }else{
         err(response.data.data);
       }
     });
   }
 
-  $scope.popup = function(){
-    if($scope.jobs){
+  $rootScope.popup = function(){
+    if($rootScope.jobs){
       ngDialog.open({
         template: '/popup.html',
-        scope: $scope
+        scope: $rootScope
       });
     }else{
       err('Jobs URL not set');
     }
   }
 
-  $scope.addEntry = function(){
+  $rootScope.addEntry = function(){
     $http.post('/api/spreadsheet', {params: {
-      sheet_id: $scope.spreadsheet.id,
-      indices: $scope.indices,
+      sheet_id: $rootScope.spreadsheet.id,
+      indices: $rootScope.indices,
       job: $rootScope.timer.currentTask,
       hours: $rootScope.timer.counter
     }}).then(function(response){
       if(response.data.result === 'success'){
-        $scope.entries.push(response.data.data);
+        $rootScope.entries.push(response.data.data);
       }else{
         err(response.data.data);
       }
     });
-    $scope.indices.lastEntryCell.row++;
+    $rootScope.indices.lastEntryCell.row++;
   }
 
   $rootScope.timer.beginTask = function(currentTask){
@@ -137,7 +140,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
         $rootScope.timer.pauseTask();
         $rootScope.timer.counter = 0;
         $rootScope.timer.currentTask = undefined;
-        $scope.$apply();
+        $rootScope.$apply();
       });
     }else{
       $rootScope.timer.pauseTask();
@@ -156,18 +159,19 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
     $rootScope.timer.clock = $interval(function(){
       $rootScope.timer.counter++;
       if($rootScope.remind.interval > 10 && $rootScope.timer.counter % $rootScope.remind.interval === 0){
-        remind($rootScope, ngDialog);
+        remind($rootScope, ngDialog, $rootScope);
       }
     },1000);
   }
 
   $rootScope.timer.endTask = function(){
-    $scope.addEntry();
+    $rootScope.addEntry();
     $rootScope.timer.cancelTask(false);
     ngDialog.closeAll();
   }
 
-  var remind = function(scope, dialog){
+  var remind = function(scope, dialog, root){
+    root.showNotification();
     if(!openReminder){
       openReminder = ngDialog.openConfirm({
         template: '/reminder.html',
@@ -182,18 +186,18 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   var init = function () {
     var jobsurl = $cookies.get('joburl');
     if(jobsurl){
-      $scope.jobsheet.id = jobsurl;
-      $scope.parseJobs();
+      $rootScope.jobsheet.id = jobsurl;
+      $rootScope.parseJobs();
     }
 
     var sheeturl = $cookies.get('sheeturl');
     if(sheeturl){
-      $scope.spreadsheet.id = sheeturl;
-      $scope.submitUrl();
+      $rootScope.spreadsheet.id = sheeturl;
+      $rootScope.submitUrl();
     }
 
     var remindInterval = $cookies.get('reminder');
-    if(remindInterval) $scope.remind.interval = remindInterval;
+    if(remindInterval) $rootScope.remind.interval = remindInterval;
   };
   init();
 
@@ -207,7 +211,44 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   };
 })
 
-.run(function($rootScope, $http, $location, $cookies){
+.run(function($rootScope, $http, $location, $cookies, $window){
+  $rootScope.formSubmitting = false;
+  $rootScope.setFormSubmitting = function(){
+    $rootScope.formSubmitting = true;
+  }
+  $window.onload = function() {
+    $window.addEventListener("beforeunload", function (e) {
+      if(!$rootScope.timer.currentTask || $rootScope.formSubmitting){
+        return undefined;
+      }
+
+      var confirmationMessage = 'The timer is running!'
+      + 'If you leave before stopping the timer, time will be lost.';
+
+      (e || $window.event).returnValue = confirmationMessage; //Gecko + IE
+      return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+    });
+  };
+
+  $window.notify.config({pageVisibility: true, autoClose: 60000});
+  $rootScope.permissionLevel = $window.notify.permissionLevel();
+  $rootScope.permissionsGranted = ($rootScope.permissionLevel===notify.PERMISSION_GRANTED);
+  $rootScope.requestPermission = function() {
+    if ($rootScope.permissionLevel === $window.notify.PERMISSION_DEFAULT) {
+      $window.notify.requestPermission(function() {
+        $rootScope.$apply($rootScope.permissionLevel = $window.notify.permissionLevel());
+        $rootScope.$apply($rootScope.permissionsGranted = ($rootScope.permissionLevel === $window.notify.PERMISSION_GRANTED));
+      });
+    }
+  }
+
+  $rootScope.showNotification = function() {
+    $window.notify.createNotification('Timesheet', {
+      body: 'Are you still working?',
+      icon: 'images/pencil.ico'
+    });
+  }
+
   $rootScope.timer = {counter: 0, clock: undefined, currentTask: undefined};
   $rootScope.remind = {interval: -1}
   $rootScope.logout = function(){

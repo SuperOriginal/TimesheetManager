@@ -15,6 +15,7 @@
     "express": "~4.13.4",
     "express-session": "^1.14.1",
     "googleapis": "^14.1.0",
+    "html5-desktop-notifications": "^1.0.0",
     "morgan": "~1.7.0",
     "ng-dialog": "^0.6.6",
     "passport": "^0.3.2",

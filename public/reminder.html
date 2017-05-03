@@ -1,9 +1,10 @@
-<div class="">
-  <h2>Are you still working on {{timer.currentTask.task}}?</h2>
-  <br>
-  <h3>You've been working for {{timer.counter | secondsToDateTime | date:'HH:mm:ss'}}</h2>
-
-  <button type="button" class="btn btn-danger pull-left" ng-click="timer.endTask()">No</button>
+<div class="container-fluid" style="text-align:center">
+  <h2 >Are you still working on <b>{{timer.currentTask.task}}</b>?</h2>
+  <hr>
+  <h3>You have been working for <br><b>{{timer.counter | secondsToDateTime | date:'HH:mm:ss'}}</b>.</h3>
+  <hr>
+  <button type="button" class="btn btn-danger pull-left" ng-click="timer.endTask()">No, I am done</button>
   <button type="button" class="btn btn-primary pull-right" ng-click="closeThisDialog()">Yes, I am still working</button>
+  <br>
   <br>
 </div>

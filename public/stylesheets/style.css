@@ -6,7 +6,7 @@ html, #main, #main main{
 #intro {
   height: 100%;
   width: auto;
-  background: url('introbg.jpg') no-repeat center center fixed;
+  background: url('../images/introbg.jpg') no-repeat center center fixed;
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
