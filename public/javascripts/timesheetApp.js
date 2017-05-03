@@ -23,8 +23,8 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('authController', function($rootScope, $window, $http, $location){
-  $rootScope.login = function(){
+.controller('authController', function($scope, $window, $http, $location){
+  $scope.login = function(){
     $window.location.href = '/auth/google';
   }
 
@@ -34,7 +34,7 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   });
 })
 
-.controller('editController', function($rootScope, $rootScope, $interval, $location, $http, $cookies, ngDialog){
+.controller('editController', function($scope, $rootScope, $interval, $location, $http, $cookies, ngDialog){
   $http.get('/auth/authenticated').then(function(response){
     if(!response.data.authenticated)
     $location.path('/');
@@ -45,80 +45,80 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
 
   window.sco = $rootScope;
   window.ngd = ngDialog;
-  $rootScope.accessToken = $location.search()['token'];
-  $rootScope.indices = {lastEntryCell:{row:1, col:0}};
-  $rootScope.entries = [];
-  $rootScope.spreadsheet = {};
-  $rootScope.jobsheet = {};
+  $scope.accessToken = $location.search()['token'];
+  $scope.indices = {lastEntryCell:{row:1, col:0}};
+  $scope.entries = [];
+  $scope.spreadsheet = {};
+  $scope.jobsheet = {};
 
   var openReminder = undefined;
 
-  $rootScope.success = success;
+  $scope.success = success;
 
-  $rootScope.edit = function(){
+  $scope.edit = function(){
     $location.url('/edit');
   }
 
-  $rootScope.settings = function(){
+  $scope.settings = function(){
     $location.url('/settings');
   }
 
-  $rootScope.updateReminder = function(){
+  $scope.updateReminder = function(){
     $cookies.put('reminder', $rootScope.remind.interval, {expires: new Date(Date.now() + 1000*60*60*24*7)});
   }
 
-  $rootScope.parseJobs = function(){
+  $scope.parseJobs = function(){
     $http.get('/api/spreadsheet', {params: {
-      sheet_id: $rootScope.jobsheet.id
+      sheet_id: $scope.jobsheet.id
     }}).then(function(response){
       if(response.data.result === 'success'){
-        $rootScope.jobdata = response;
-        $cookies.put('joburl', $rootScope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
-        readJobs(response.data.data.values, $rootScope);
+        $scope.jobdata = response;
+        $cookies.put('joburl', $scope.jobsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
+        readJobs(response.data.data.values, $scope);
       }else{
         err(response.data.data);
       }
     });
   }
 
-  $rootScope.submitUrl = function(){
+  $scope.submitUrl = function(){
     $http.get('/api/spreadsheet', {params: {
-      sheet_id: $rootScope.spreadsheet.id
+      sheet_id: $scope.spreadsheet.id
     }}).then(function(response){
       if(response.data.result === 'success'){
-        $cookies.put('sheeturl', $rootScope.spreadsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
-        updateIndices(response.data.data.values, $rootScope);
+        $cookies.put('sheeturl', $scope.spreadsheet.id, {expires: new Date(Date.now() + 1000*60*60*24*7)});
+        updateIndices(response.data.data.values, $scope);
       }else{
         err(response.data.data);
       }
     });
   }
 
-  $rootScope.popup = function(){
-    if($rootScope.jobs){
+  $scope.popup = function(){
+    if($scope.jobs){
       ngDialog.open({
         template: '/popup.html',
-        scope: $rootScope
+        scope: $scope
       });
     }else{
       err('Jobs URL not set');
     }
   }
 
-  $rootScope.addEntry = function(){
+  $scope.addEntry = function(){
     $http.post('/api/spreadsheet', {params: {
-      sheet_id: $rootScope.spreadsheet.id,
-      indices: $rootScope.indices,
+      sheet_id: $scope.spreadsheet.id,
+      indices: $scope.indices,
       job: $rootScope.timer.currentTask,
       hours: $rootScope.timer.counter
     }}).then(function(response){
       if(response.data.result === 'success'){
-        $rootScope.entries.push(response.data.data);
+        $scope.entries.push(response.data.data);
       }else{
         err(response.data.data);
       }
     });
-    $rootScope.indices.lastEntryCell.row++;
+    $scope.indices.lastEntryCell.row++;
   }
 
   $rootScope.timer.beginTask = function(currentTask){
@@ -186,18 +186,18 @@ timesheetApp.config(function($stateProvider, $locationProvider, $urlRouterProvid
   var init = function () {
     var jobsurl = $cookies.get('joburl');
     if(jobsurl){
-      $rootScope.jobsheet.id = jobsurl;
-      $rootScope.parseJobs();
+      $scope.jobsheet.id = jobsurl;
+      $scope.parseJobs();
     }
 
     var sheeturl = $cookies.get('sheeturl');
     if(sheeturl){
-      $rootScope.spreadsheet.id = sheeturl;
-      $rootScope.submitUrl();
+      $scope.spreadsheet.id = sheeturl;
+      $scope.submitUrl();
     }
 
     var remindInterval = $cookies.get('reminder');
-    if(remindInterval) $rootScope.remind.interval = remindInterval;
+    if(remindInterval) $scope.remind.interval = remindInterval;
   };
   init();
 
